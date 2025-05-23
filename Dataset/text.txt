@@ -1,0 +1,62 @@
+        
+         DATA PREPROCESSING BEFROE BUILDING MACHINE LEARNING 
+
+
+         python -m venv/myenv
+         source myenv/bin /active 
+         pip install category_encoders
+
+
+
+         sudo pacman -S python-pipx
+         pipx install category-encoders
+
+
+
+
+
+
+ step : 1 
+        import necessary libraries
+
+        ---         
+
+
+ step :2 
+       read dataset
+
+ step :3 
+
+     sanity check of data 
+     (it means, kunai data khali xa ki xaina vanera check garne )
+
+ step :4 
+
+     Exploratory data analysis (EDA)
+
+ step :5 
+
+       Missing value treatment 
+
+ step : 6 
+
+      Outliers treatments 
+
+ step :7 
+
+        duplicates and garbage value treatment 
+
+
+ step :8  
+
+       Normalization 
+
+
+ step : 9 
+
+      Encoding of data 
+
+      Label Encoding for categorical data like , male , female ,other 
+      in health_conditin we have hypertension , dibeties ,asthma 
+      in activity_type we have hiit,yoga,wt training,dancing,cycling,tennis,running,swimming,basketball,walking
+     

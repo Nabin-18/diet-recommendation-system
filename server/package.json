@@ -1,0 +1,25 @@
+{
+  "name": "server",
+  "module": "index.ts",
+  "type": "module",
+  "devDependencies": {
+    "@types/bun": "^1.2.13",
+    "@types/express": "^5.0.1",
+    "@types/node": "^22.15.18",
+    "prisma": "^6.8.1"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  },
+  "dependencies": {
+    "@prisma/client": "^6.8.1",
+    "@types/bcrypt": "^5.0.2",
+    "@types/dotenv": "^8.2.3",
+    "@types/jsonwebtoken": "^9.0.9",
+    "bcrypt": "^6.0.0",
+    "express": "^5.1.0",
+    "jsonwebtoken": "^9.0.2",
+    "jwt": "^0.2.0"
+  },
+  "private": true
+}
