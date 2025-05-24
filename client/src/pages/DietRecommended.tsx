@@ -45,6 +45,9 @@ const dietFormSchema = z.object({
   goal: z.enum(["wt-gain", "wt-loss", "maintain"], {
     required_error: "Goal is required",
   }),
+  activity: z.enum(["walking", "swimming", "tennis","basketball","cycling","yoga","hiit","weight training","running","dancing"], {
+    required_error: "Activity is required",
+  }),
 
   preference: z.enum(["vegeterain", "non-vegeterain"], {
     required_error: "Preference is required",
@@ -169,6 +172,34 @@ const DietRecommended = () => {
                 />
                 <p className="text-red-500 text-sm mt-1">
                   {errors.goal?.message}
+                </p>
+              </div>
+              <div className="w-full">
+                <Controller
+                  control={control}
+                  name="activity"
+                  render={({ field }) => (
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <SelectTrigger className="w-full rounded-[8px] focus-visible:ring-0 shadow-none placeholder:text-gray-500">
+                        <SelectValue placeholder="Activity" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="walking">Walking</SelectItem>
+                        <SelectItem value="cycling">Cyclying</SelectItem>
+                        <SelectItem value="hiit">HIIT</SelectItem>
+                        <SelectItem value="yoga">Yoga</SelectItem>
+                        <SelectItem value="dancing">Dancing</SelectItem>
+                        <SelectItem value="basketball">Basketball</SelectItem>
+                        <SelectItem value="swimming">Swimming</SelectItem>
+                        <SelectItem value="tennis">Tennis</SelectItem>
+                        <SelectItem value="running">Running</SelectItem>
+                        <SelectItem value="weight training">Weight Training</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  )}
+                />
+                <p className="text-red-500 text-sm mt-1">
+                  {errors.activity?.message}
                 </p>
               </div>
 
