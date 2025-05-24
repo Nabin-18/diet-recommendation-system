@@ -17,7 +17,7 @@ datasource db {
 //create user model 
 
 model User {
-  id               Int                @id @default(autoincrement())  
+  id               Int                @id @default(autoincrement())
   name             String
   email            String             @unique
   password         String
@@ -26,6 +26,7 @@ model User {
   createdAt        DateTime           @default(now())
   updatedAt        DateTime           @updatedAt
   UserInputDetails UserInputDetails[]
+  PredictedDetails PredictedDetails[]
 }
 
 model UserInputDetails {
@@ -45,4 +46,25 @@ model UserInputDetails {
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model PredictedDetails {
+  id             Int      @id @default(autoincrement()) //primary key
+  Name           String
+  calories       Float
+  protein        Float
+  carbs          Float
+  fats           Float
+  sodium         Float
+  fiber          Float
+  sugar          Float
+  Instructions   String
+  image          String
+  predictionDate DateTime @default(now())
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  //realtions
+  userId Int
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }

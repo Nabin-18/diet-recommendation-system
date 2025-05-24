@@ -6,13 +6,13 @@
     "@types/bun": "^1.2.13",
     "@types/express": "^5.0.1",
     "@types/node": "^22.15.18",
-    "prisma": "^6.8.1"
+    "prisma": "^6.8.2"
   },
   "peerDependencies": {
     "typescript": "^5"
   },
   "dependencies": {
-    "@prisma/client": "^6.8.1",
+    "@prisma/client": "^6.8.2",
     "@types/bcrypt": "^5.0.2",
     "@types/dotenv": "^8.2.3",
     "@types/jsonwebtoken": "^9.0.9",

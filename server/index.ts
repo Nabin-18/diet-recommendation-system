@@ -18,11 +18,15 @@ connectDB();
 // import routes
 import userRoutes from './routes/userRoutes'
 import userInputRoutes from './routes/userInputRoutes'
+import predictedDietRoutes from './routes/predictedDietRoutes'
 // import {  generateExpiry, generateOTP } from './controllers/forgetPassword';
 
 
 app.use("/api/user", userRoutes)
-app.use("/api/user",userInputRoutes)
+app.use("/api/user", userInputRoutes)
+//get the details from dataset 
+
+app.use("/api", predictedDietRoutes)
 
 app.get('/', (req, res) => {
   res.send('Hello World');
