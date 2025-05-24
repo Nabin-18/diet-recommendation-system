@@ -17,19 +17,21 @@ connectDB();
 
 // import routes
 import userRoutes from './routes/userRoutes'
-import {  generateExpiry, generateOTP } from './controllers/forgetPassword';
+import userInputRoutes from './routes/userInputRoutes'
+// import {  generateExpiry, generateOTP } from './controllers/forgetPassword';
 
 
 app.use("/api/user", userRoutes)
+app.use("/api/user",userInputRoutes)
 
 app.get('/', (req, res) => {
   res.send('Hello World');
 });
 
 
-//calling my function 
-generateOTP()
-generateExpiry
+// //calling my function 
+// generateOTP()
+// generateExpiry
 
 app.listen(PORT, () => {
   console.log(`Server is running on http://localhost:${PORT}`);
