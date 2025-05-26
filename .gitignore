@@ -7,3 +7,5 @@ cleaned_recipes.csv
 node_modules
 generated
 .env
+
+__pycache__/
