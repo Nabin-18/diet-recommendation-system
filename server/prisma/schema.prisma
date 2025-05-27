@@ -50,6 +50,10 @@ model UserInputDetails {
 
 model PredictedDetails {
   id             Int      @id @default(autoincrement()) //primary key
+  bmr            Float?
+  tdee           Float?
+  bmi            Float?
+  calorie_target Float?
   Name           String
   calories       Float
   protein        Float

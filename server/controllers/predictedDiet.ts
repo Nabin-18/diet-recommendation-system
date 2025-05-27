@@ -5,7 +5,7 @@ import type { Request, Response } from "express";
 
 export const savePrediction = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { userId, protein, calories, sugar, fats, Name, carbs, sodium, fiber, Instructions, image } = req.body
+    const { userId, protein, calories, sugar, fats, Name, carbs, sodium, fiber, Instructions, image,tdee,calorie_target,bmr,bmi } = req.body
 
     const prediction = await prisma.predictedDetails.create({
       data: {
@@ -19,7 +19,12 @@ export const savePrediction = async (req: Request, res: Response): Promise<void>
         sodium,
         fiber,
         Instructions,
-        image
+        image,
+        tdee,
+        bmr,
+        bmi,
+        calorie_target
+
       }
     })
     res.status(200).json({

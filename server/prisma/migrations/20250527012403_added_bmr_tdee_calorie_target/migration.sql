@@ -1,0 +1,5 @@
+-- AlterTable
+ALTER TABLE "PredictedDetails" ADD COLUMN     "bmi" DOUBLE PRECISION,
+ADD COLUMN     "bmr" DOUBLE PRECISION,
+ADD COLUMN     "calorie_target" DOUBLE PRECISION,
+ADD COLUMN     "tdee" DOUBLE PRECISION;
