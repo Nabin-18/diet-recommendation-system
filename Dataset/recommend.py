@@ -45,6 +45,10 @@ def bmi_category(bmi):
         return "Overweight"
     return "Obese"
 
+def tdee_calories(bmr, activity_type):
+    multiplier = get_activity_multiplier(activity_type)
+    return round(bmr * multiplier, 2)
+
 def format_instructions(instructions):
     if isinstance(instructions, list):
         return "\n".join(f"{i+1}. {step.strip().capitalize()}" for i, step in enumerate(instructions) if step.strip())
@@ -128,6 +132,7 @@ def suggest_diet(user_input, recipe):
         return {
             "bmr": None,
             "bmi": None,
+            "tdee": None,
             "calorie_target": None,
             "diet_plan": []
         }
@@ -152,6 +157,7 @@ def suggest_diet(user_input, recipe):
         return {
             "bmr": round(bmr, 2),
             "bmi": bmi,
+            "tdee": round(tdee, 2),
             "calorie_target": round(cal_target, 2),
             "diet_plan": []
         }
@@ -212,6 +218,7 @@ def suggest_diet(user_input, recipe):
     return {
         "bmr": round(bmr, 2),
         "bmi": bmi,
+        "tdee": round(tdee, 2),
         "calorie_target": round(cal_target, 2),
         "diet_plan": diet_plan
     }
