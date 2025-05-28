@@ -5,9 +5,9 @@ user_input = {
     'age': 40,
     'height_cm': 150,
     'weight_kg': 70,
-    'goal': 'maintain',
+    'goal': 'wt-loss',
     'Type': 'vegetarian',
-    'meal_type': 'general',
+    'meal_type': 'lunch',
     'health_conditions': ['hypertension'],
     'meal_frequency': 3,
     'activity_type': 'yoga'

@@ -7,11 +7,13 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { z } from "zod";
+
+
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
 import RecommendedDiet from "./RecommendedDiet";
-import dataFromModel from "@/assets/data";
+import { useState } from "react";
 
 const dietFormSchema = z.object({
   height: z
@@ -45,11 +47,26 @@ const dietFormSchema = z.object({
   goal: z.enum(["wt-gain", "wt-loss", "maintain"], {
     required_error: "Goal is required",
   }),
-  activity: z.enum(["walking", "swimming", "tennis","basketball","cycling","yoga","hiit","weight training","running","dancing"], {
-    required_error: "Activity is required",
-  }),
 
-  preference: z.enum(["vegeterain", "non-vegeterain"], {
+  activity: z.enum(
+    [
+      "walking",
+      "swimming",
+      "tennis",
+      "basketball",
+      "cycling",
+      "yoga",
+      "hiit",
+      "weight training",
+      "running",
+      "dancing",
+    ],
+    {
+      required_error: "Activity is required",
+    }
+  ),
+
+  preference: z.enum(["vegetarian", "non-vegetarian"], {
     required_error: "Preference is required",
   }),
 
@@ -66,21 +83,57 @@ const dietFormSchema = z.object({
   }),
 });
 
-const DietRecommended = () => {
-  const {
-    register,
-    handleSubmit,
-    control,
-    formState: { errors },
-  } = useForm({
-    resolver: zodResolver(dietFormSchema),
-  });
+export type DietFormData = z.infer<typeof dietFormSchema>;
 
-  type DietFormData = z.infer<typeof dietFormSchema>;
+interface Recommendation {
+  name: string;
+  image: string;
+  calories: number;
+  fat: number;
+  sugar: number;
+  sodium: number;
+  fiber: number;
+  carbs: number;
+  instruction: string;
+}
 
-  const onSubmit = (data: DietFormData) => {
-    console.log("Form Submitted:", data);
+const DietRecommended: React.FC = () => {
+ const {
+  register,
+  handleSubmit,
+  control,
+  formState: { errors },
+} = useForm<DietFormData>({
+  
+  resolver: zodResolver(dietFormSchema), 
+});
+
+
+  const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
+
+  const onSubmit = async (data: DietFormData):Promise<void> => {
+    try {
+      const response = await fetch("http://localhost:5000/api/user/input-details", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
+      });
+
+      const result = await response.json();
+
+      if (response.ok) {
+        console.log("Server Response:", result);
+        setRecommendations(result);
+      } else {
+        console.error("Server Error:", result);
+      }
+    } catch (error) {
+      console.error("Fetch Error:", error);
+    }
   };
+
 
   return (
     <>
@@ -193,7 +246,9 @@ const DietRecommended = () => {
                         <SelectItem value="swimming">Swimming</SelectItem>
                         <SelectItem value="tennis">Tennis</SelectItem>
                         <SelectItem value="running">Running</SelectItem>
-                        <SelectItem value="weight training">Weight Training</SelectItem>
+                        <SelectItem value="weight training">
+                          Weight Training
+                        </SelectItem>
                       </SelectContent>
                     </Select>
                   )}
@@ -213,9 +268,9 @@ const DietRecommended = () => {
                         <SelectValue placeholder="Preference" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="vegeterain">Vegeterain</SelectItem>
-                        <SelectItem value="non-vegeterain">
-                          Non-Vegeterain
+                        <SelectItem value="vegetarian">Vegetarian</SelectItem>
+                        <SelectItem value="non-vegetarian">
+                          Non-Vegetarian
                         </SelectItem>
                       </SelectContent>
                     </Select>
@@ -313,8 +368,8 @@ const DietRecommended = () => {
       <div className="m-auto  items-center shadow-2xl rounded-2xl flex flex-col gap-6  mt-4">
         <h1 className="text-xl font-semibold text-center">Recommended Diets</h1>
         <div className="flex flex-wrap gap-6">
-          {dataFromModel.length > 0 ? (
-            dataFromModel.map((item, index) => (
+          {recommendations.length > 0 ? (
+            recommendations.map((item, index) => (
               <RecommendedDiet
                 key={index}
                 name={item.name}

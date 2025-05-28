@@ -18,8 +18,10 @@
     "@types/jsonwebtoken": "^9.0.9",
     "bcrypt": "^6.0.0",
     "express": "^5.1.0",
+    "fetch": "^1.1.0",
     "jsonwebtoken": "^9.0.2",
-    "jwt": "^0.2.0"
+    "jwt": "^0.2.0",
+    "node-fetch": "^3.3.2"
   },
   "private": true
 }
