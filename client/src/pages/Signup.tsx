@@ -13,10 +13,12 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { BiSolidHide } from "react-icons/bi";
-import { BiSolidShow } from "react-icons/bi";
+import { BiSolidHide, BiSolidShow } from "react-icons/bi";
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import axios from "axios";
 
 const formSchema = z.object({
   username: z.string().min(2, {
@@ -31,6 +33,9 @@ const formSchema = z.object({
 });
 
 const Signup = () => {
+  const navigate = useNavigate();
+  const [show, setShow] = useState(false);
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -40,28 +45,39 @@ const Signup = () => {
     },
   });
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
-    console.log("Form Submitted:", values);
-  }
-
-  const [show, setShow] = useState(false);
-
-  const handelPasswordIcon = () => {
+  const handlePasswordIcon = () => {
     setShow((prev) => !prev);
+  };
+
+  const onSubmit = async (values: z.infer<typeof formSchema>) => {
+    try {
+      await axios.post("http://localhost:5000/api/user/create-account", {
+        name: values.username,
+        email: values.email,
+        password: values.password,
+      });
+      toast.success("Signup Successfully!");
+      // Redirect after short delay
+      setTimeout(() => {
+        navigate("/auth/login");
+      }, 2000);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } catch (error: any) {
+      const message =
+        error.response?.data?.message || "Signup failed. Try again.";
+      toast.error(message);
+    }
   };
 
   return (
     <>
-      <div className="min-h-screen  flex items-center justify-center bg-gray-100">
+      <div className="min-h-screen flex items-center justify-center bg-gray-100">
         <Form {...form}>
           <form
             onSubmit={form.handleSubmit(onSubmit)}
-            className="space-y-6 max-w-md mx-auto p-6 bg-white shadow-lg border rounded-2xl flex flex-col  w-full "
+            className="space-y-6 max-w-md mx-auto p-6 bg-white shadow-lg border rounded-2xl flex flex-col w-full"
           >
-            <h1 className="text-center font-bold text-2xl underline">
-              {" "}
-              Sign Up{" "}
-            </h1>
+            <h1 className="text-center font-bold text-2xl underline">Sign Up</h1>
 
             <FormField
               control={form.control}
@@ -115,7 +131,7 @@ const Signup = () => {
                       />
                       <span
                         className="absolute top-1/2 right-3 transform -translate-y-1/2 text-xl text-gray-600 cursor-pointer"
-                        onClick={handelPasswordIcon}
+                        onClick={handlePasswordIcon}
                       >
                         {show ? <BiSolidHide /> : <BiSolidShow />}
                       </span>
@@ -130,12 +146,13 @@ const Signup = () => {
               Sign Up
             </Button>
             <Link to={"/auth/login"}>
-              <p className="font-semibold cursor-pointer underline">
+              <p className="font-semibold cursor-pointer underline text-center">
                 Already have an account?
               </p>
             </Link>
           </form>
         </Form>
+        <ToastContainer />
       </div>
     </>
   );

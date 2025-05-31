@@ -5,6 +5,6 @@ import { logInController, signUpController } from "../controllers/userController
 const router = Router()
 
 router.post("/create-account", signUpController)
-router.get("/get-user", logInController)
+router.post("/get-user", logInController)
 
 export default router;

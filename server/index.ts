@@ -3,6 +3,7 @@ import type { Express, Request, Response } from 'express';
 import dotenv from 'dotenv';
 import { connectDB } from './config/db';
 import fetch from 'node-fetch'; 
+import cors from 'cors'
 
 dotenv.config();
 const PORT = process.env.PORT || 5000;
@@ -10,6 +11,8 @@ const PORT = process.env.PORT || 5000;
 
 
 const app: Express = express();
+
+app.use(cors())
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));

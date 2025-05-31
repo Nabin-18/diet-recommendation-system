@@ -1,4 +1,4 @@
-import { Link, Outlet } from "react-router-dom";
+import { Outlet, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 
 const MainPage = () => {
@@ -21,6 +21,7 @@ const MainPage = () => {
             </Link>
           </div>
         </div>
+
         <div className="w-[80%] bg-gray-100 p-4">
           <Outlet />
         </div>

@@ -54,11 +54,8 @@ export const signUpController = async (req: Request, res: Response): Promise<voi
 //get the data from database to login the user 
 
 export const logInController = async (req: Request, res: Response): Promise<void> => {
-  const { email, password } = req.body
-
-
-
   try {
+    const { email, password } = req.body 
     const user = await prisma.user.findUnique({
 
       where: { email: email }
