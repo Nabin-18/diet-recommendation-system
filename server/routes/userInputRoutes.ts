@@ -1,8 +1,9 @@
-import { Router } from "express";
+import express from "express";
+import { authenticateUser } from "../middleware/authMiddleware";
 import { getAllInputDetailsOfUser } from "../controllers/userInputDetailsController";
 
-const router=Router()
+const router = express.Router();
 
-router.post("/input-details",getAllInputDetailsOfUser)
+router.post("/user-input", authenticateUser, getAllInputDetailsOfUser);
 
-export default router
+export default router;

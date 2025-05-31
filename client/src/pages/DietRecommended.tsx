@@ -8,12 +8,12 @@ import {
 } from "@/components/ui/select";
 import { z } from "zod";
 
-
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
-import RecommendedDiet from "./RecommendedDiet";
-import { useState } from "react";
+// import RecommendedDiet from "./RecommendedDiet";
+// import { useState } from "react";
+import axios from "axios";
 
 const dietFormSchema = z.object({
   height: z
@@ -23,7 +23,6 @@ const dietFormSchema = z.object({
     .refine((val) => val >= 50, {
       message: "Minimum height should be 50 cm",
     }),
-
   weight: z
     .string()
     .regex(/^\d+$/, "Weight must be a number")
@@ -31,7 +30,6 @@ const dietFormSchema = z.object({
     .refine((val) => val >= 10, {
       message: "Minimum weight should be 10 kg",
     }),
-
   age: z
     .string()
     .regex(/^\d+$/, "Age must be a number")
@@ -39,16 +37,13 @@ const dietFormSchema = z.object({
     .refine((val) => val >= 10, {
       message: "Minimum age should be 10 years",
     }),
-
   gender: z.enum(["male", "female", "others"], {
     required_error: "Gender is required",
   }),
-
-  goal: z.enum(["wt-gain", "wt-loss", "maintain"], {
+  goal: z.enum(["weight_gain", "weight_loss", "maintain"], {
     required_error: "Goal is required",
   }),
-
-  activity: z.enum(
+  activityType: z.enum(
     [
       "walking",
       "swimming",
@@ -65,76 +60,76 @@ const dietFormSchema = z.object({
       required_error: "Activity is required",
     }
   ),
-
-  preference: z.enum(["vegetarian", "non-vegetarian"], {
+  preferences: z.enum(["vegetarian", "non-vegetarian"], {
     required_error: "Preference is required",
   }),
-
-  condition: z.enum(["asthama", "hypertension", "diabetes", "normal"], {
+  healthIssues: z.enum(["asthama", "hypertension", "diabetes", "normal"], {
     required_error: "Condition is required",
   }),
-
-  mealType: z.enum(["general", "breakfast", "lunch", "dinner"], {
+  mealPlan: z.enum(["general", "breakfast", "lunch", "dinner"], {
     required_error: "Meal type is required",
   }),
-
-  mealFrequency: z.enum(["1", "2", "3", "4"], {
-    required_error: "Frequency is required",
-  }),
+  mealFrequency: z
+    .number()
+    .int()
+    .min(1, "Meal frequency must be between 1 and 4")
+    .max(4, "Meal frequency must be between 1 and 4"),
 });
 
 export type DietFormData = z.infer<typeof dietFormSchema>;
 
-interface Recommendation {
-  name: string;
-  image: string;
-  calories: number;
-  fat: number;
-  sugar: number;
-  sodium: number;
-  fiber: number;
-  carbs: number;
-  instruction: string;
-}
+// interface Recommendation {
+//   name: string;
+//   image: string;
+//   calories: number;
+//   fat: number;
+//   sugar: number;
+//   sodium: number;
+//   fiber: number;
+//   carbs: number;
+//   instruction: string;
+// }
 
 const DietRecommended: React.FC = () => {
- const {
-  register,
-  handleSubmit,
-  control,
-  formState: { errors },
-} = useForm<DietFormData>({
-  
-  resolver: zodResolver(dietFormSchema), 
-});
+  const {
+    register,
+    control,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<DietFormData>({
+    resolver: zodResolver(dietFormSchema),
+  });
 
+  // const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
+  // const [loading, setLoading] = useState(false);
+  // const [error, setError] = useState<string | null>(null);
 
-  const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
+  const onSubmit = async (data: DietFormData) => {
+    const token = localStorage.getItem("token");
 
-  const onSubmit = async (data: DietFormData):Promise<void> => {
+    if (!token) {
+      console.error("No token found in localStorage");
+      return;
+    }
+
+    console.log("Form data submitted:", data);
+
     try {
-      const response = await fetch("http://localhost:5000/api/user/input-details", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(data),
-      });
+      const response = await axios.post(
+        "http://localhost:5000/api/user/user-input",
+        data,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
 
-      const result = await response.json();
-
-      if (response.ok) {
-        console.log("Server Response:", result);
-        setRecommendations(result);
-      } else {
-        console.error("Server Error:", result);
-      }
+      console.log("Response from server:", response.data);
     } catch (error) {
-      console.error("Fetch Error:", error);
+      console.error("Error submitting form:", error);
     }
   };
-
-
   return (
     <>
       <div className="m-auto flex flex-col items-center shadow-2xl rounded-2xl bg-white">
@@ -160,7 +155,7 @@ const DietRecommended: React.FC = () => {
               <div className="w-full">
                 <Input
                   {...register("weight")}
-                  placeholder="Enter your Weight(kg)"
+                  placeholder="Enter your Weight (kg)"
                   className="rounded-[8px] focus-visible:ring-0 shadow-none placeholder:text-gray-500"
                 />
                 <p className="text-red-500 text-sm mt-1">
@@ -205,19 +200,19 @@ const DietRecommended: React.FC = () => {
             </div>
 
             <h1 className="font-bold text-2xl">Health Preference:</h1>
-            <div className="flex items-center gap-8">
+            <div className="flex items-center gap-8 ">
               <div className="w-full">
                 <Controller
                   control={control}
                   name="goal"
                   render={({ field }) => (
                     <Select onValueChange={field.onChange} value={field.value}>
-                      <SelectTrigger className="w-full rounded-[8px] focus-visible:ring-0 shadow-none placeholder:text-gray-500">
+                      <SelectTrigger className="w-full rounded-[8px]">
                         <SelectValue placeholder="Goal" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="wt-gain">Weight Gain</SelectItem>
-                        <SelectItem value="wt-loss">Weight Loss</SelectItem>
+                        <SelectItem value="weight_gain">Weight Gain</SelectItem>
+                        <SelectItem value="weight_loss">Weight Loss</SelectItem>
                         <SelectItem value="maintain">Maintain</SelectItem>
                       </SelectContent>
                     </Select>
@@ -227,44 +222,49 @@ const DietRecommended: React.FC = () => {
                   {errors.goal?.message}
                 </p>
               </div>
+
               <div className="w-full">
                 <Controller
                   control={control}
-                  name="activity"
+                  name="activityType"
                   render={({ field }) => (
                     <Select onValueChange={field.onChange} value={field.value}>
-                      <SelectTrigger className="w-full rounded-[8px] focus-visible:ring-0 shadow-none placeholder:text-gray-500">
+                      <SelectTrigger className="w-full rounded-[8px]">
                         <SelectValue placeholder="Activity" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="walking">Walking</SelectItem>
-                        <SelectItem value="cycling">Cyclying</SelectItem>
-                        <SelectItem value="hiit">HIIT</SelectItem>
-                        <SelectItem value="yoga">Yoga</SelectItem>
-                        <SelectItem value="dancing">Dancing</SelectItem>
-                        <SelectItem value="basketball">Basketball</SelectItem>
-                        <SelectItem value="swimming">Swimming</SelectItem>
-                        <SelectItem value="tennis">Tennis</SelectItem>
-                        <SelectItem value="running">Running</SelectItem>
-                        <SelectItem value="weight training">
-                          Weight Training
-                        </SelectItem>
+                        {[
+                          "walking",
+                          "cycling",
+                          "hiit",
+                          "yoga",
+                          "dancing",
+                          "basketball",
+                          "swimming",
+                          "tennis",
+                          "running",
+                          "weight training",
+                        ].map((act) => (
+                          <SelectItem key={act} value={act}>
+                            {act.charAt(0).toUpperCase() + act.slice(1)}
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                   )}
                 />
                 <p className="text-red-500 text-sm mt-1">
-                  {errors.activity?.message}
+                  {errors.activityType?.message}
                 </p>
               </div>
 
               <div className="w-full">
                 <Controller
                   control={control}
-                  name="preference"
+                  name="preferences"
                   render={({ field }) => (
                     <Select onValueChange={field.onChange} value={field.value}>
-                      <SelectTrigger className="w-full rounded-[8px] focus-visible:ring-0 shadow-none placeholder:text-gray-500">
+                      <SelectTrigger className="w-full rounded-[8px]">
                         <SelectValue placeholder="Preference" />
                       </SelectTrigger>
                       <SelectContent>
@@ -277,18 +277,18 @@ const DietRecommended: React.FC = () => {
                   )}
                 />
                 <p className="text-red-500 text-sm mt-1">
-                  {errors.preference?.message}
+                  {errors.preferences?.message}
                 </p>
               </div>
 
               <div className="w-full">
                 <Controller
                   control={control}
-                  name="condition"
+                  name="healthIssues"
                   render={({ field }) => (
                     <Select onValueChange={field.onChange} value={field.value}>
-                      <SelectTrigger className="w-full rounded-[8px] focus-visible:ring-0 shadow-none placeholder:text-gray-500">
-                        <SelectValue placeholder="Health Condition" />
+                      <SelectTrigger className="w-full rounded-[8px]">
+                        <SelectValue placeholder="Condition" />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="asthama">Asthama</SelectItem>
@@ -302,20 +302,20 @@ const DietRecommended: React.FC = () => {
                   )}
                 />
                 <p className="text-red-500 text-sm mt-1">
-                  {errors.condition?.message}
+                  {errors.healthIssues?.message}
                 </p>
               </div>
             </div>
 
-            <h1 className="font-bold text-2xl">Meal Preference:</h1>
+            <h1 className="font-bold text-2xl">Meal Type & Frequency:</h1>
             <div className="flex items-center gap-8">
               <div className="w-full">
                 <Controller
                   control={control}
-                  name="mealType"
+                  name="mealPlan"
                   render={({ field }) => (
                     <Select onValueChange={field.onChange} value={field.value}>
-                      <SelectTrigger className="w-full rounded-[8px] focus-visible:ring-0 shadow-none placeholder:text-gray-500">
+                      <SelectTrigger className="w-full rounded-[8px]">
                         <SelectValue placeholder="Meal Type" />
                       </SelectTrigger>
                       <SelectContent>
@@ -328,7 +328,7 @@ const DietRecommended: React.FC = () => {
                   )}
                 />
                 <p className="text-red-500 text-sm mt-1">
-                  {errors.mealType?.message}
+                  {errors.mealPlan?.message}
                 </p>
               </div>
 
@@ -337,8 +337,11 @@ const DietRecommended: React.FC = () => {
                   control={control}
                   name="mealFrequency"
                   render={({ field }) => (
-                    <Select onValueChange={field.onChange} value={field.value}>
-                      <SelectTrigger className="w-full rounded-[8px] focus-visible:ring-0 shadow-none placeholder:text-gray-500">
+                    <Select
+                      onValueChange={(val) => field.onChange(Number(val))}
+                      value={field.value?.toString() || ""}
+                    >
+                      <SelectTrigger className="w-full rounded-[8px]">
                         <SelectValue placeholder="Meal Frequency" />
                       </SelectTrigger>
                       <SelectContent>
@@ -350,6 +353,7 @@ const DietRecommended: React.FC = () => {
                     </Select>
                   )}
                 />
+
                 <p className="text-red-500 text-sm mt-1">
                   {errors.mealFrequency?.message}
                 </p>
@@ -359,15 +363,21 @@ const DietRecommended: React.FC = () => {
             <Button
               type="submit"
               className="mt-6 w-[20%] m-auto cursor-pointer rounded-[8px] font-semibold"
+              // disabled={loading}
             >
-              Submit
+              {/* {loading ? "Loading..." : "Get Recommendations"} */}
+              Get Recommendations
             </Button>
+            {/* {error && (
+              <p className="text-red-600 text-center mt-4 font-semibold">{error}</p>
+            )} */}
           </div>
         </form>
       </div>
-      <div className="m-auto  items-center shadow-2xl rounded-2xl flex flex-col gap-6  mt-4">
+
+      <div className="m-auto items-center shadow-2xl rounded-2xl flex flex-col gap-6 mt-4 p-8 bg-white">
         <h1 className="text-xl font-semibold text-center">Recommended Diets</h1>
-        <div className="flex flex-wrap gap-6">
+        {/* <div className="flex flex-wrap gap-6 justify-center">
           {recommendations.length > 0 ? (
             recommendations.map((item, index) => (
               <RecommendedDiet
@@ -384,9 +394,11 @@ const DietRecommended: React.FC = () => {
               />
             ))
           ) : (
-            <p className="text-gray-500 text-lg">No data to show</p>
+            <p className="text-gray-500 text-lg text-center">
+              No recommendations yet. Please fill out the form above.
+            </p>
           )}
-        </div>
+        </div> */}
       </div>
     </>
   );

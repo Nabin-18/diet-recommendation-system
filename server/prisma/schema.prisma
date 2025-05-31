@@ -38,7 +38,7 @@ model UserInputDetails {
   goal          String
   activityType  String
   preferences   String
-  healthIssues  String[]
+  healthIssues  String
   mealPlan      String
   mealFrequency Int
 

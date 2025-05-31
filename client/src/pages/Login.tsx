@@ -57,6 +57,9 @@ const Login = () => {
       console.log(values);
 
       if (response.status === 200) {
+        const {token}= response.data;
+        localStorage.setItem("token", token);
+        
         toast.success("Login Successful!");
         setTimeout(() => {
           navigate("/main-page");

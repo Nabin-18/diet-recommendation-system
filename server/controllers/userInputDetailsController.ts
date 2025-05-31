@@ -1,5 +1,6 @@
 import prisma from "../config/db";
-import type { Request, Response } from "express";
+import type { Response } from "express";
+import type { AuthenticatedRequest } from "../middleware/authMiddleware";
 
 interface UserInputDetails {
   height: number;
@@ -9,13 +10,12 @@ interface UserInputDetails {
   goal: string;
   activityType: string;
   preferences: string;
-  healthIssues: string[];
+  healthIssues: string;
   mealPlan: string;
   mealFrequency: number;
-  userId: number;
 }
 
-export const getAllInputDetailsOfUser = async (req: Request, res: Response): Promise<void> => {
+export const getAllInputDetailsOfUser = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
     const {
       height,
@@ -28,8 +28,14 @@ export const getAllInputDetailsOfUser = async (req: Request, res: Response): Pro
       healthIssues,
       mealPlan,
       mealFrequency,
-      userId
-    }: UserInputDetails = req.body;
+    } = req.body as UserInputDetails;
+
+    const userId = req.user?.id;
+
+    if (!userId) {
+      res.status(401).json({ message: "Unauthorized: User ID missing from token" });
+      return;
+    }
 
     const inputDetails = await prisma.userInputDetails.create({
       data: {
@@ -44,20 +50,21 @@ export const getAllInputDetailsOfUser = async (req: Request, res: Response): Pro
         mealPlan,
         mealFrequency,
         user: {
-          connect: { id: userId }
-        }
-      }
+          connect: {
+            id: userId,
+          },
+        },
+      },
     });
 
     res.status(200).json({
       message: "Input details are taken",
-      data: inputDetails
+      data: inputDetails,
     });
-
   } catch (error) {
     console.error("Error saving input details:", error);
     res.status(500).json({
-      message: "Internal Server Error"
+      message: "Internal Server Error",
     });
   }
 };
