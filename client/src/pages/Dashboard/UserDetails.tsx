@@ -88,6 +88,20 @@ const userProfileDetails = [
     color: "text-teal-500",
     hoverColor: "hover:border-teal-500 hover:text-teal-500",
   },
+  {
+    label: "Health Condition",
+    value: "Normal",
+    icon: <HiUserGroup className="text-3xl text-teal-500 mb-2" />,
+    color: "text-teal-500",
+    hoverColor: "hover:border-teal-500 hover:text-teal-500",
+  },
+  {
+    label: "Meal Frequency",
+    value: 2,
+    icon: <HiUserGroup className="text-3xl text-teal-500 mb-2" />,
+    color: "text-teal-500",
+    hoverColor: "hover:border-teal-500 hover:text-teal-500",
+  }
 ];
 
 const UserDetails: React.FC = () => {

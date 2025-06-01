@@ -45,31 +45,24 @@ export const savePrediction = async (req: Request, res: Response): Promise<void>
 }
 
 //get all the saved predicated details of diet to show the user 
-
-export const getPredictedDetails = async (req: Request, res: Response): Promise<void> => {
+export const getPredictedDetails = async (req: AuthenticatedRequest, res: Response) => {
+  const userId = req.user?.id;
+  if (!userId) {
+    return res.status(401).json({ message: "Unauthorized" });
+  }
 
   try {
-    const { userId } = req.params
-    if (!userId) {
-      res.status(400).json({ message: "userId is required" });
-      return;
-    }
-    const prediction = await prisma.predictedDetails.findMany({
-      where: { userId: parseInt(userId, 10) },
-      //here 10 is the radix value
-      //to get the latest predicted data
-      orderBy: { predictionDate: "desc" }
-
+    const predictions = await prisma.predictedDetails.findFirst({
+      where: { userId },
+      orderBy: { predictionDate: 'desc' },
+      
     });
-    res.status(200).json({
-      data: prediction
-    })
-  }
-  catch (error) {
-    console.log(error)
-    res.status(500).json({
-      message: "Error fetching prediction"
-    })
-  }
+    
 
-}
+    res.status(200).json({ predictions });
+  } catch (error) {
+    console.error("Error fetching predictions:", error);
+    res.status(500).json({ message: "Failed to fetch predictions" });
+  }
+};
+

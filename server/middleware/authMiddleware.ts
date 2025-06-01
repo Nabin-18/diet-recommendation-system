@@ -6,7 +6,7 @@ interface JwtPayload {
   email: string;
 }
 
-export const authenticateToken = (req: Request, res: Response, next: NextFunction) => {
+export const authenticateToken = (req:Request, res: Response, next: NextFunction) => {
   const authHeader = req.headers['authorization'];
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
     return res.status(401).json({ message: "Token missing" });

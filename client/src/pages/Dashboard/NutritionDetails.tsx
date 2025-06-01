@@ -50,7 +50,7 @@ const NutritionDetails: React.FC = () => {
           Nutrient Breakdown (Pie Chart)
         </h2>
         <div className="flex justify-center">
-          <PieChart width={350} height={350}>
+          <PieChart width={400} height={300}>
             <Pie
               data={sampleNutrientData}
               cx="50%"
@@ -59,6 +59,7 @@ const NutritionDetails: React.FC = () => {
               fill="#8884d8"
               dataKey="value"
               label
+              className="cursor-pointer"
             >
               {sampleNutrientData.map((entry, index) => (
                 <Cell
@@ -87,13 +88,16 @@ const NutritionDetails: React.FC = () => {
           <BarChart
             data={sampleNutrientData}
             margin={{ top: 10, right: 30, left: 10, bottom: 5 }}
+           
           >
             <CartesianGrid strokeDasharray="3 3" />
             <XAxis dataKey="name" />
             <YAxis />
             <Tooltip />
             <Legend />
-            <Bar dataKey="value" activeBar={false}>
+            <Bar
+             className="cursor-pointer"
+             dataKey="value" activeBar={false}>
               {sampleNutrientData.map((entry, index) => (
                 <Cell
                   key={`bar-${index}`}
