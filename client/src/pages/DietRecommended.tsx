@@ -121,6 +121,7 @@ const DietRecommended: React.FC = () => {
         {
           headers: {
             Authorization: `Bearer ${token}`,
+
           },
         }
       );

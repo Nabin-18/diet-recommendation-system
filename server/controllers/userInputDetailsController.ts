@@ -31,11 +31,12 @@ export const getAllInputDetailsOfUser = async (req: AuthenticatedRequest, res: R
     } = req.body as UserInputDetails;
 
     const userId = req.user?.id;
-
+    
     if (!userId) {
       res.status(401).json({ message: "Unauthorized: User ID missing from token" });
       return;
     }
+    console.log(userId)
 
     const inputDetails = await prisma.userInputDetails.create({
       data: {
