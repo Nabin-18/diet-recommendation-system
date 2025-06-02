@@ -5,6 +5,7 @@ import Signup from "@/pages/Signup";
 import MainPage from "@/pages/MainPage";
 import DietRecommended from "@/pages/DietRecommended";
 import Dashboard from "@/pages/Dashboard";
+import ChatBot from "@/pages/chatbot/ChatBot";
 
 const AppRoutes = () => {
   return (
@@ -26,6 +27,7 @@ const AppRoutes = () => {
         />
         <Route path="diet-recommend" element={<DietRecommended />} />
         <Route path="dashboard" element={<Dashboard />} />
+        <Route path="chat-bot" element={<ChatBot />} />
       </Route>
     </Routes>
   );

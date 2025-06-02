@@ -20,6 +20,13 @@ const MainPage = () => {
               </Button>
             </Link>
           </div>
+          <div className="w-full">
+            <Link to={"chat-bot"}>
+              <Button className="cursor-pointer w-full rounded-[8px] font-bold">
+                Virtual Doctor
+              </Button>
+            </Link>
+          </div>
         </div>
 
         <div className="w-[100%] bg-gray-100 p-4">
