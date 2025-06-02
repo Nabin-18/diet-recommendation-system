@@ -52,7 +52,7 @@ export const getPredictedDetails = async (req: AuthenticatedRequest, res: Respon
   }
 
   try {
-    const predictions = await prisma.predictedDetails.findFirst({
+    const predictions = await prisma.predictedDetails.findMany({
       where: { userId },
       orderBy: { predictionDate: 'desc' },
       

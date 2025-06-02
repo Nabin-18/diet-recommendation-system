@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -11,8 +12,8 @@ import { z } from "zod";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
-// import RecommendedDiet from "./RecommendedDiet";
-// import { useState } from "react";
+import RecommendedDiet from "./RecommendedDiet";
+import { useState } from "react";
 import axios from "axios";
 
 const dietFormSchema = z.object({
@@ -78,17 +79,24 @@ const dietFormSchema = z.object({
 
 export type DietFormData = z.infer<typeof dietFormSchema>;
 
-// interface Recommendation {
-//   name: string;
-//   image: string;
-//   calories: number;
-//   fat: number;
-//   sugar: number;
-//   sodium: number;
-//   fiber: number;
-//   carbs: number;
-//   instruction: string;
-// }
+interface Recommendation {
+  fats: number;
+  protein: number;
+  Instructions: string;
+  bmr: number;
+  tdee: number;
+  calorie_target: number;
+  bmi: number;
+  name: string;
+  image: string;
+  calories: number;
+  fat: number;
+  sugar: number;
+  sodium: number;
+  fiber: number;
+  carbs: number;
+  instruction: string;
+}
 
 const DietRecommended: React.FC = () => {
   const {
@@ -100,37 +108,63 @@ const DietRecommended: React.FC = () => {
     resolver: zodResolver(dietFormSchema),
   });
 
-  // const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
-  // const [loading, setLoading] = useState(false);
-  // const [error, setError] = useState<string | null>(null);
+  const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const onSubmit = async (data: DietFormData) => {
-    const token = localStorage.getItem("token");
+    setError(null); // clear previous errors
+    setLoading(true); // start loading
 
+    const token = localStorage.getItem("token");
     if (!token) {
-      console.error("No token found in localStorage");
+      setError("No authentication token found. Please login.");
+      setLoading(false);
       return;
     }
 
-    console.log("Form data submitted:", data);
-
     try {
+      // Send user input details to backend
       const response = await axios.post(
         "http://localhost:5000/api/user/user-input",
         data,
         {
           headers: {
             Authorization: `Bearer ${token}`,
-
           },
         }
       );
 
-      console.log("Response from server:", response.data);
-    } catch (error) {
-      console.error("Error submitting form:", error);
+      // Extract userId from response
+      const userId = response.data.userId;
+
+      // Fetch diet recommendations based on userId
+      const recommendationsResponse = await axios.get(
+        `http://localhost:5000/api/prediction/${userId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      // Update recommendations state with received data
+      setRecommendations([recommendationsResponse.data.predictions]);
+
+      console.log("Recommendations received:", recommendationsResponse.data.recommendations);
+
+
+    } catch (err: any) {
+      console.error("Error submitting form:", err);
+      setError(
+        err.response?.data?.message ||
+          "An error occurred while fetching recommendations."
+      );
+    } finally {
+      setLoading(false); // stop loading in any case
     }
   };
+
   return (
     <>
       <div className="m-auto flex flex-col items-center shadow-2xl rounded-2xl bg-white">
@@ -172,9 +206,7 @@ const DietRecommended: React.FC = () => {
                   placeholder="Enter age"
                   className="rounded-[8px] focus-visible:ring-0 shadow-none placeholder:text-gray-500"
                 />
-                <p className="text-red-500 text-sm mt-1">
-                  {errors.age?.message}
-                </p>
+                <p className="text-red-500 text-sm mt-1">{errors.age?.message}</p>
               </div>
 
               <div className="w-full">
@@ -219,9 +251,7 @@ const DietRecommended: React.FC = () => {
                     </Select>
                   )}
                 />
-                <p className="text-red-500 text-sm mt-1">
-                  {errors.goal?.message}
-                </p>
+                <p className="text-red-500 text-sm mt-1">{errors.goal?.message}</p>
               </div>
 
               <div className="w-full">
@@ -328,9 +358,7 @@ const DietRecommended: React.FC = () => {
                     </Select>
                   )}
                 />
-                <p className="text-red-500 text-sm mt-1">
-                  {errors.mealPlan?.message}
-                </p>
+                <p className="text-red-500 text-sm mt-1">{errors.mealPlan?.message}</p>
               </div>
 
               <div className="w-full">
@@ -364,42 +392,47 @@ const DietRecommended: React.FC = () => {
             <Button
               type="submit"
               className="mt-6 w-[20%] m-auto cursor-pointer rounded-[8px] font-semibold"
-              // disabled={loading}
+              disabled={loading}
             >
-              {/* {loading ? "Loading..." : "Get Recommendations"} */}
-              Get Recommendations
+              {loading ? "Loading..." : "Get Recommendations"}
             </Button>
-            {/* {error && (
+
+            {error && (
               <p className="text-red-600 text-center mt-4 font-semibold">{error}</p>
-            )} */}
+            )}
           </div>
         </form>
       </div>
 
       <div className="m-auto items-center shadow-2xl rounded-2xl flex flex-col gap-6 mt-4 p-8 bg-white">
         <h1 className="text-xl font-semibold text-center">Recommended Diets</h1>
-        {/* <div className="flex flex-wrap gap-6 justify-center">
+        <div className="flex flex-wrap gap-6 justify-center">
           {recommendations.length > 0 ? (
             recommendations.map((item, index) => (
               <RecommendedDiet
-                key={index}
-                name={item.name}
-                image={item.image}
-                calories={item.calories}
-                fat={item.fat}
-                sugar={item.sugar}
-                sodium={item.sodium}
-                fiber={item.fiber}
-                carbs={item.carbs}
-                instruction={item.instruction}
-              />
+            key={index}
+            Name={item.name}
+            image={item.image}
+            calories={item.calories}
+            fats={item.fats}
+            sugar={item.sugar}
+            sodium={item.sodium}
+            carbs={item.carbs}
+            fiber={item.fiber}
+            protein={item.protein}
+            Instructions={item.Instructions}
+            bmr={item.bmr}
+            tdee={item.tdee}
+            calorie_target={item.calorie_target}
+            bmi={item.bmi}
+          />
             ))
           ) : (
             <p className="text-gray-500 text-lg text-center">
               No recommendations yet. Please fill out the form above.
             </p>
           )}
-        </div> */}
+        </div>
       </div>
     </>
   );

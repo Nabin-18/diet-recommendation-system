@@ -25,10 +25,12 @@ connectDB();
 import userRoutes from './routes/userRoutes';
 import userInputRoutes from './routes/userInputRoutes';
 import predictedDietRoutes from './routes/predictedDietRoutes';
+import dashboardRoute from './routes/dashboardRoute'
 
 app.use("/api/user", userRoutes);
 app.use("/api/user", userInputRoutes);
 app.use("/api", predictedDietRoutes);
+app.use("/api",dashboardRoute)
 
 app.get('/', (req: Request, res: Response) => {
   res.send('Hello World');
