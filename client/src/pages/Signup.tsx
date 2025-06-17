@@ -21,6 +21,12 @@ import "react-toastify/dist/ReactToastify.css";
 import axios from "axios";
 
 const formSchema = z.object({
+  image: z
+  .any()
+  .refine((file) => file instanceof File || file === undefined, {
+    message: "Image must be a file",
+  }),
+
   username: z.string().min(2, {
     message: "Username must be at least 2 characters.",
   }),
@@ -29,6 +35,10 @@ const formSchema = z.object({
   }),
   password: z.string().min(8, {
     message: "Password must be at least 8 characters.",
+  }),
+  dob: z.string().nonempty("Date of Birth is required"),
+  gender: z.enum(["male", "female", "other"], {
+    required_error: "Please select a gender",
   }),
 });
 
@@ -42,6 +52,9 @@ const Signup = () => {
       username: "",
       email: "",
       password: "",
+      dob: "",
+      gender: "male",
+
     },
   });
 
@@ -50,11 +63,22 @@ const Signup = () => {
   };
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
+    const formData = new FormData();
+    // formData.append("image", values.image as File);
+    formData.append("name", values.username);
+    formData.append("email", values.email);
+    formData.append("password", values.password);
+    if(values.image){
+      formData.append("image", values.image);
+    }
+    formData.append("dob", values.dob);
+    formData.append("gender", values.gender);
+    
     try {
-      await axios.post("http://localhost:5000/api/user/create-account", {
-        name: values.username,
-        email: values.email,
-        password: values.password,
+      await axios.post("http://localhost:5000/api/user/create-account", formData,{
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
       });
       toast.success("Signup Successfully!");
       // Redirect after short delay
@@ -78,7 +102,30 @@ const Signup = () => {
             className="space-y-6 max-w-md mx-auto p-6 bg-white shadow-lg border rounded-2xl flex flex-col w-full"
           >
             <h1 className="text-center font-bold text-2xl underline">Sign Up</h1>
+            
+            {/* Image Upload */}
+            <FormField
+              control={form.control}
+              name="image"
+              render={({ field }) => (
 
+                <FormItem>
+                  <FormLabel className="font-semibold">Profile Image</FormLabel>
+                  <FormControl>
+                    <div className="relative">
+                      <Input
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => field.onChange(e.target.files?.[0])}
+                      />
+                    </div>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {/* username */}
             <FormField
               control={form.control}
               name="username"
@@ -96,7 +143,7 @@ const Signup = () => {
                 </FormItem>
               )}
             />
-
+            {/* Email */}
             <FormField
               control={form.control}
               name="email"
@@ -114,13 +161,13 @@ const Signup = () => {
                 </FormItem>
               )}
             />
-
+            {/* Password */}
             <FormField
               control={form.control}
               name="password"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="font-semibold">Password:</FormLabel>
+                  <FormLabel className="font-semibold">Password</FormLabel>
                   <FormControl>
                     <div className="relative">
                       <Input
@@ -133,8 +180,65 @@ const Signup = () => {
                         className="absolute top-1/2 right-3 transform -translate-y-1/2 text-xl text-gray-600 cursor-pointer"
                         onClick={handlePasswordIcon}
                       >
-                        {show ? <BiSolidHide /> : <BiSolidShow />}
+                        {show ? <BiSolidShow /> : <BiSolidHide />}
                       </span>
+                    </div>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {/* Date of Birth */}
+            <FormField
+              control={form.control}
+              name="dob"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="font-semibold ">Date of Birth</FormLabel>
+                  <FormControl>
+                    <Input type="date" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+               {/* Gender */}
+            <FormField
+              control={form.control}
+              name="gender"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="font-semibold">Gender</FormLabel>
+                  <FormControl>
+                    <div className="flex gap-4">
+                      <label className="flex items-center gap-2">
+                        <input
+                          type="radio"
+                          value="male"
+                          checked={field.value === "male"}
+                          onChange={field.onChange}
+                        />
+                        Male
+                      </label>
+                      <label className="flex items-center gap-2">
+                        <input
+                          type="radio"
+                          value="female"
+                          checked={field.value === "female"}
+                          onChange={field.onChange}
+                        />
+                        Female
+                      </label>
+                      <label className="flex items-center gap-2">
+                        <input
+                          type="radio"
+                          value="other"
+                          checked={field.value === "other"}
+                          onChange={field.onChange}
+                        />
+                        Other
+                      </label>
                     </div>
                   </FormControl>
                   <FormMessage />

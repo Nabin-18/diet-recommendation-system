@@ -5,7 +5,11 @@ import jwt from "jsonwebtoken";
 
 export const signUpController = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { name, email, password } = req.body;
+    const { name, email, password, dob, gender } = req.body;
+
+    const image = req.file? `/uploads/${req.file.filename}` : null;
+
+
 
     const existingUser = await prisma.user.findUnique({
       where: { email },
@@ -22,12 +26,15 @@ export const signUpController = async (req: Request, res: Response): Promise<voi
         name,
         email,
         password: hashedPassword,
+        dob: dob ? new Date(dob) : null,
+        gender,
+        image,
       },
     });
 
     res.status(201).json({
       message: "User created successfully!",
-      data: { id: newUser.id, name: newUser.name, email: newUser.email },
+      data: { id: newUser.id, name: newUser.name, email: newUser.email,dob: newUser.dob, gender: newUser.gender, image: newUser.image  },
     });
   } catch (error) {
     console.error(error);
