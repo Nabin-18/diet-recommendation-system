@@ -2,30 +2,28 @@
   "name": "server",
   "module": "index.ts",
   "type": "module",
+  "private": true,
   "devDependencies": {
-    "@types/bun": "^1.2.13",
-    "@types/express": "^5.0.1",
-    "@types/node": "^22.15.18",
-    "prisma": "^6.8.2"
+    "@types/bcrypt": "^5.0.2",
+    "@types/bun": "latest",
+    "@types/express": "^5.0.3",
+    "@types/jsonwebtoken": "^9.0.10",
+    "@types/multer": "^1.4.13"
   },
   "peerDependencies": {
     "typescript": "^5"
   },
   "dependencies": {
-    "@google/generative-ai": "^0.24.1",
-    "@prisma/client": "^6.8.2",
-    "@types/bcrypt": "^5.0.2",
-    "@types/cors": "^2.8.18",
-    "@types/dotenv": "^8.2.3",
-    "@types/jsonwebtoken": "^9.0.9",
-    "axios": "^1.9.0",
+    "@prisma/client": "^6.9.0",
+    "axios": "^1.10.0",
     "bcrypt": "^6.0.0",
+    "bcryptjs": "^3.0.2",
     "cors": "^2.8.5",
+    "dotenv": "^16.5.0",
     "express": "^5.1.0",
     "fetch": "^1.1.0",
     "jsonwebtoken": "^9.0.2",
-    "jwt": "^0.2.0",
-    "node-fetch": "^3.3.2"
-  },
-  "private": true
+    "multer": "^2.0.1",
+    "prisma": "^6.9.0"
+  }
 }
