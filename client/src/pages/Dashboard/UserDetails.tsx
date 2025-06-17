@@ -17,6 +17,15 @@ const baseUrl = import.meta.env.VITE_BASE_URL || "http://localhost:5000";
 
 const UserDetails: React.FC<Props> = ({ userData }) => {
   const { user, inputDetails, prediction } = userData;
+
+  // Show warning if inputDetails or prediction is missing
+  if (!inputDetails || !prediction) {
+    return (
+      <div className="text-center mt-10 text-red-500 font-semibold text-lg">
+        ⚠️ Please enter your personal details to view your dashboard information.
+      </div>
+    );
+  }
   
   const userProfileDetails = [
     {
