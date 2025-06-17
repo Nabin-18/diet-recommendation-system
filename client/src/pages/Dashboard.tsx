@@ -9,6 +9,7 @@ interface DashboardData {
   user: {
     name: string;
     email: string;
+    image?: string;
   };
   inputDetails: {
     age: number;
@@ -55,6 +56,7 @@ const Dashboard = () => {
           headers: { Authorization: `Bearer ${token}` },
         });
         console.log("Fetched Dashboard:", JSON.stringify(res.data, null, 2));
+        console.log("User Image from DB:", res.data.user.image);
         setData(res.data);
       } catch (err) {
         console.error("Failed to load dashboard data:", err);

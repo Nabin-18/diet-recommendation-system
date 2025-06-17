@@ -18,6 +18,7 @@ export const getDashboardData = async (req: AuthenticatedRequest, res: Response)
       select: {
         name: true,
         email: true,
+        image: true, 
       },
     });
 
