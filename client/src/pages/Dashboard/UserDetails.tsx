@@ -1,26 +1,49 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import {
-  HiUser, HiScale, HiCalendar, HiUserGroup,
+import { HiScale, HiCalendar, HiUserGroup,
 } from "react-icons/hi";
 import { GiBodyHeight } from "react-icons/gi";
 import { TbTargetArrow } from "react-icons/tb";
 
 interface Props {
   userData: {
-    user: { name: string; email: string };
+    user: { name: string; email: string; image?: string };
     inputDetails: any;
     prediction: any;
   };
 }
+const baseUrl = import.meta.env.VITE_BASE_URL || "http://localhost:5000";
+
+
 
 const UserDetails: React.FC<Props> = ({ userData }) => {
   const { user, inputDetails, prediction } = userData;
 
+  // Show warning if inputDetails or prediction is missing
+  if (!inputDetails || !prediction) {
+    return (
+      <div className="text-center mt-10 text-red-500 font-semibold text-lg">
+        ⚠️ Please enter your personal details to view your dashboard information.
+      </div>
+    );
+  }
+  
   const userProfileDetails = [
     {
       label: "Username",
       value: user.name,
-      icon: <HiUser className="text-3xl text-blue-500 mb-2" />,
+      icon: (
+        <img
+  src={
+    user.image?.startsWith("/uploads")
+      ? `${baseUrl}${user.image}` // e.g., http://localhost:5000/uploads/...
+      : user.image?.startsWith("http")
+      ? user.image // full external image
+      : "/default-user.png"
+  }
+  alt="User profile"
+  className="w-12 h-12 rounded-full mb-2 object-cover border"
+/>
+    ),
       color: "text-green-500",
       hoverColor: "hover:border-green-500 hover:text-green-500",
     },

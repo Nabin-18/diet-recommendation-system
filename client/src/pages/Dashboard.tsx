@@ -9,6 +9,7 @@ interface DashboardData {
   user: {
     name: string;
     email: string;
+    image?: string;
   };
   inputDetails: {
     age: number;
@@ -55,6 +56,7 @@ const Dashboard = () => {
           headers: { Authorization: `Bearer ${token}` },
         });
         console.log("Fetched Dashboard:", JSON.stringify(res.data, null, 2));
+        console.log("User Image from DB:", res.data.user.image);
         setData(res.data);
       } catch (err) {
         console.error("Failed to load dashboard data:", err);
@@ -73,21 +75,27 @@ const Dashboard = () => {
     <div>
       <UserDetails userData={data} />
       <hr />
-     <NutritionDetails
-  nutrients={{
-    protein: data.prediction.protein,
-    carbs: data.prediction.carbs,
-    fats: data.prediction.fats,
-    sugar: data.prediction.sugar,
-    sodium: data.prediction.sodium,
-    fiber: data.prediction.fiber,
-    calories: data.prediction.calories,
-  }}
-/>
-
-
-      <hr />
-      {/* <Instructions recommendedRecipe={data.prediction.recommendedDiet} /> */}
+         {!data.inputDetails || !data.prediction ? (
+        <div className="text-red-500 text-center mt-4">
+          ⚠️ Please enter your details to receive your personalized nutrition recommendations.
+        </div>
+      ) : (
+        <>
+          <NutritionDetails
+            nutrients={{
+              protein: data.prediction.protein,
+              carbs: data.prediction.carbs,
+              fats: data.prediction.fats,
+              sugar: data.prediction.sugar,
+              sodium: data.prediction.sodium,
+              fiber: data.prediction.fiber,
+              calories: data.prediction.calories,
+            }}
+          />
+          <hr />
+          {/* <Instructions recommendedRecipe={data.prediction.recommendedDiet} /> */}
+        </>
+      )}
     </div>
   );
 };
