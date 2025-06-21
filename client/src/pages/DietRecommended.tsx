@@ -114,7 +114,7 @@ interface Recommendation {
   tdee: number;
   calorie_target: number;
   bmi: number;
-  name: string;
+  Name: string;
   image: string;
   calories: number;
   fat: number;

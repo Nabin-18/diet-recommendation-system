@@ -5,6 +5,7 @@ import {
   User,
   MessageCircle,
   Utensils,
+  NotebookPen,
   Activity,
   Settings,
 } from "lucide-react";
@@ -36,6 +37,15 @@ const MainPage = () => {
       notifications: notifications.profile,
       description: "Health metrics",
     },
+    {
+      to: "diet-plan",
+      label: "Diet Plan",
+      icon: <NotebookPen className="w-5 h-5" />,
+      gradient: "from-blue-500 to-indigo-600",
+      notifications: notifications.profile,
+      description: "Your personalized diet plan",
+    },
+    
     {
       to: "notification",
       label: "Notification",
@@ -102,7 +112,7 @@ const MainPage = () => {
           </div>
 
           {/* Navigation Items */}
-          <div className="p-6 space-y-4 pb-20">
+          <div className="p-6 space-y-4 pb-20 flex flex-col gap-1">
             {navItems.map((item) => (
               <Link key={item.to} to={item.to}>
                 <Button className="w-full h-auto p-0 bg-transparent hover:bg-transparent border-0 shadow-none">
@@ -136,14 +146,14 @@ const MainPage = () => {
           </div>
 
           {/* Settings */}
-          <div className="absolute bottom-6 left-6 right-6">
+          {/* <div className="absolute bottom-6 left-6 right-6">
             <Button
               variant="outline"
               className="w-full justify-start gap-3 h-12 bg-slate-50 hover:bg-slate-100 border-slate-200">
               <Settings className="w-5 h-5 text-slate-600" />
               <span className="font-medium text-slate-700">Settings</span>
             </Button>
-          </div>
+          </div> */}
         </div>
 
         {/* Main Content Area */}
