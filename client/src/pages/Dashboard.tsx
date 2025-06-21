@@ -87,7 +87,6 @@ const Dashboard: React.FC<Props> = ({ dashboardData, loading, onRefresh, error }
   }
 
   return (
-<<<<<<< HEAD
     <div>
       <UserDetails userData={data} />
       <hr />
@@ -102,19 +101,6 @@ const Dashboard: React.FC<Props> = ({ dashboardData, loading, onRefresh, error }
     // calories: data.prediction.calories,
   }}
 />
-=======
-    <div className="max-w-4xl mx-auto p-4">
-      {/* Header with refresh button */}
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold text-gray-800">Dashboard</h1>
-        <button 
-          onClick={onRefresh}
-          className="bg-gray-100 text-gray-700 px-3 py-1 rounded text-sm hover:bg-gray-200"
-        >
-          Refresh
-        </button>
-      </div>
->>>>>>> 69512dc873935d127eefd40b924aab77d0dd4ac3
 
       {/* User Details */}
       <div className="mb-6">
