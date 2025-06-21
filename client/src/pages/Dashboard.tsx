@@ -8,7 +8,7 @@ import axios from "axios";
 interface DashboardData {
   user: {
     name: string;
-    email: string;
+    email: string;  
   };
   inputDetails: {
     age: number;
@@ -79,9 +79,9 @@ const Dashboard = () => {
     carbs: data.prediction.carbs,
     fats: data.prediction.fats,
     sugar: data.prediction.sugar,
-    sodium: data.prediction.sodium,
+    // sodium: data.prediction.sodium,
     fiber: data.prediction.fiber,
-    calories: data.prediction.calories,
+    // calories: data.prediction.calories,
   }}
 />
 
