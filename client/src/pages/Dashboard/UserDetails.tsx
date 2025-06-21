@@ -1,8 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { HiScale, HiCalendar, HiUserGroup,
-} from "react-icons/hi";
+import { HiScale, HiCalendar, HiUserGroup } from "react-icons/hi";
 import { GiBodyHeight } from "react-icons/gi";
 import { TbTargetArrow } from "react-icons/tb";
+import { FaFire, FaHeart, FaUtensils } from "react-icons/fa";
 
 interface Props {
   userData: {
@@ -11,9 +11,8 @@ interface Props {
     prediction: any;
   };
 }
+
 const baseUrl = import.meta.env.VITE_BASE_URL || "http://localhost:5000";
-
-
 
 const UserDetails: React.FC<Props> = ({ userData }) => {
   const { user, inputDetails, prediction } = userData;
@@ -21,136 +20,163 @@ const UserDetails: React.FC<Props> = ({ userData }) => {
   // Show warning if inputDetails or prediction is missing
   if (!inputDetails || !prediction) {
     return (
-      <div className="text-center mt-10 text-red-500 font-semibold text-lg">
-        ⚠️ Please enter your personal details to view your dashboard information.
+      <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6 text-center">
+        <div className="text-yellow-700 font-medium mb-2">
+          ⚠️ Profile Incomplete
+        </div>
+        <p className="text-yellow-600">
+          Please enter your personal details to view your dashboard information.
+        </p>
       </div>
     );
   }
-  
-  const userProfileDetails = [
-    {
-      label: "Username",
-      value: user.name,
-      icon: (
-        <img
-  src={
-    user.image?.startsWith("/uploads")
-      ? `${baseUrl}${user.image}` // e.g., http://localhost:5000/uploads/...
-      : user.image?.startsWith("http")
-      ? user.image // full external image
-      : "/default-user.png"
-  }
-  alt="User profile"
-  className="w-12 h-12 rounded-full mb-2 object-cover border"
-/>
-    ),
-      color: "text-green-500",
-      hoverColor: "hover:border-green-500 hover:text-green-500",
-    },
-    {
-      label: "Weight",
-      value: `${inputDetails.weight} kg`,
-      icon: <HiScale className="text-3xl text-purple-500 mb-2" />,
-      color: "text-purple-500",
-      hoverColor: "hover:border-purple-500 hover:text-purple-500",
-    },
-    {
-      label: "Height",
-      value: `${inputDetails.height} cm`,
-      icon: <GiBodyHeight className="text-3xl text-orange-500 mb-2" />,
-      color: "text-orange-500",
-      hoverColor: "hover:border-orange-500 hover:text-orange-500",
-    },
-    {
-      label: "Age",
-      value: `${inputDetails.age} years`,
-      icon: <HiCalendar className="text-3xl text-pink-500 mb-2" />,
-      color: "text-pink-500",
-      hoverColor: "hover:border-pink-500 hover:text-pink-500",
-    },
-    {
-      label: "Gender",
-      value: inputDetails.gender,
-      icon: <HiUserGroup className="text-3xl text-yellow-500 mb-2" />,
-      color: "text-yellow-500",
-      hoverColor: "hover:border-yellow-500 hover:text-yellow-500",
-    },
-    {
-      label: "BMI",
-      value: prediction.bmi,
-      icon: <HiScale className="text-3xl text-blue-500 mb-2" />,
-      color: "text-blue-500",
-      hoverColor: "hover:border-blue-500 hover:text-blue-500",
-    },
-    {
-      label: "Activity",
-      value: inputDetails.activityType,
-      icon: <HiUserGroup className="text-3xl text-green-500 mb-2" />,
-      color: "text-green-500",
-      hoverColor: "hover:border-green-500 hover:text-green-500",
-    },
-    {
-      label: "Goal",
-      value: inputDetails.goal,
-      icon: <TbTargetArrow className="text-3xl text-red-500 mb-2" />,
-      color: "text-red-500",
-      hoverColor: "hover:border-red-500 hover:text-red-500",
-    },
-    {
-      label: "Target Calories",
-      value: `${prediction.calorie_target} kcal`,
-      icon: <HiScale className="text-3xl text-indigo-500 mb-2" />,
-      color: "text-indigo-500",
-      hoverColor: "hover:border-indigo-500 hover:text-indigo-500",
-    },
-    {
-      label: "TDEE",
-      value: `${prediction.tdee} kcal`,
-      icon: <HiScale className="text-3xl text-gray-500 mb-2" />,
-      color: "text-gray-500",
-      hoverColor: "hover:border-gray-500 hover:text-gray-500",
-    },
-    {
-      label: "BMR",
-      value: `${prediction.bmr} kcal`,
-      icon: <HiScale className="text-3xl text-amber-500 mb-2" />,
-      color: "text-amber-500",
-      hoverColor: "hover:border-amber-500 hover:text-amber-500",
-    },
-    {
-      label: "Preference",
-      value: inputDetails.preferences,
-      icon: <HiUserGroup className="text-3xl text-teal-500 mb-2" />,
-      color: "text-teal-500",
-      hoverColor: "hover:border-teal-500 hover:text-teal-500",
-    },
-    {
-      label: "Meal Frequency",
-      value: inputDetails.mealFrequency,
-      icon: <HiUserGroup className="text-3xl text-teal-500 mb-2" />,
-      color: "text-teal-500",
-      hoverColor: "hover:border-teal-500 hover:text-teal-500",
-    },
-  ];
 
   return (
-    <div className="p-4">
-      <h1 className="text-center font-semibold text-2xl mb-4">
-        User Profile Details:
-      </h1>
-      <div className="flex flex-wrap justify-center gap-4">
-        {userProfileDetails.map((detail, index) => (
-          <div
-            key={index}
-            className={`flex flex-col items-center justify-center bg-white shadow-2xl w-[200px] h-[140px] rounded-2xl p-4 border-2 border-transparent transition duration-300 ease-in-out cursor-pointer ${detail.hoverColor}`}
-          >
-            {detail.icon}
-            <p className="font-semibold">{detail.label}</p>
-            <p className={`font-bold text-2xl ${detail.color}`}>
-              {detail.value}
-            </p>
+    <div className="space-y-6">
+      {/* User Profile Header */}
+      <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-6">
+        <div className="flex items-center space-x-4">
+          <img
+            src={
+              user.image?.startsWith("/uploads")
+                ? `${baseUrl}${user.image}`
+                : user.image?.startsWith("http")
+                ? user.image
+                : "/default-user.png"
+            }
+            alt="User profile"
+            className="w-16 h-16 rounded-full object-cover border-3 border-white shadow-lg"
+          />
+          <div>
+            <h2 className="text-2xl font-bold text-gray-800">{user.name}</h2>
+            <p className="text-gray-600">{user.email}</p>
           </div>
-        ))}
+        </div>
+      </div>
+
+      {/* Basic Info Cards */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="bg-white rounded-lg p-4 shadow-sm border border-gray-100">
+          <div className="flex items-center space-x-3">
+            <HiScale className="text-2xl text-purple-500" />
+            <div>
+              <p className="text-sm text-gray-500">Weight</p>
+              <p className="font-semibold text-gray-800">{inputDetails.weight} kg</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-lg p-4 shadow-sm border border-gray-100">
+          <div className="flex items-center space-x-3">
+            <GiBodyHeight className="text-2xl text-orange-500" />
+            <div>
+              <p className="text-sm text-gray-500">Height</p>
+              <p className="font-semibold text-gray-800">{inputDetails.height} cm</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-lg p-4 shadow-sm border border-gray-100">
+          <div className="flex items-center space-x-3">
+            <HiCalendar className="text-2xl text-pink-500" />
+            <div>
+              <p className="text-sm text-gray-500">Age</p>
+              <p className="font-semibold text-gray-800">{inputDetails.age} years</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-lg p-4 shadow-sm border border-gray-100">
+          <div className="flex items-center space-x-3">
+            <HiUserGroup className="text-2xl text-blue-500" />
+            <div>
+              <p className="text-sm text-gray-500">Gender</p>
+              <p className="font-semibold text-gray-800">{inputDetails.gender}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Health Metrics */}
+      <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+        <h3 className="text-lg font-semibold text-gray-800 mb-4">Health Metrics</h3>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="text-center">
+            <div className="bg-blue-50 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-2">
+              <HiScale className="text-2xl text-blue-600" />
+            </div>
+            <p className="text-sm text-gray-500">BMI</p>
+            <p className="text-2xl font-bold text-blue-600">{prediction.bmi}</p>
+          </div>
+
+          <div className="text-center">
+            <div className="bg-red-50 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-2">
+              <FaFire className="text-2xl text-red-600" />
+            </div>
+            <p className="text-sm text-gray-500">TDEE</p>
+            <p className="text-2xl font-bold text-red-600">{prediction.tdee}</p>
+            <p className="text-xs text-gray-400">kcal/day</p>
+          </div>
+
+          <div className="text-center">
+            <div className="bg-green-50 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-2">
+              <FaHeart className="text-2xl text-green-600" />
+            </div>
+            <p className="text-sm text-gray-500">BMR</p>
+            <p className="text-2xl font-bold text-green-600">{prediction.bmr}</p>
+            <p className="text-xs text-gray-400">kcal/day</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Goals & Preferences */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+          <h3 className="text-lg font-semibold text-gray-800 mb-4">Goals & Activity</h3>
+          <div className="space-y-4">
+            <div className="flex items-center space-x-3">
+              <TbTargetArrow className="text-xl text-red-500" />
+              <div>
+                <p className="text-sm text-gray-500">Goal</p>
+                <p className="font-medium text-gray-800">{inputDetails.goal}</p>
+              </div>
+            </div>
+            <div className="flex items-center space-x-3">
+              <HiUserGroup className="text-xl text-green-500" />
+              <div>
+                <p className="text-sm text-gray-500">Activity Level</p>
+                <p className="font-medium text-gray-800">{inputDetails.activityType}</p>
+              </div>
+            </div>
+            <div className="flex items-center space-x-3">
+              <FaFire className="text-xl text-orange-500" />
+              <div>
+                <p className="text-sm text-gray-500">Target Calories</p>
+                <p className="font-medium text-gray-800">{prediction.calorie_target} kcal</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+          <h3 className="text-lg font-semibold text-gray-800 mb-4">Preferences</h3>
+          <div className="space-y-4">
+            <div className="flex items-center space-x-3">
+              <FaUtensils className="text-xl text-teal-500" />
+              <div>
+                <p className="text-sm text-gray-500">Diet Preference</p>
+                <p className="font-medium text-gray-800">{inputDetails.preferences}</p>
+              </div>
+            </div>
+            <div className="flex items-center space-x-3">
+              <HiCalendar className="text-xl text-purple-500" />
+              <div>
+                <p className="text-sm text-gray-500">Meal Frequency</p>
+                <p className="font-medium text-gray-800">{inputDetails.mealFrequency}</p>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );
