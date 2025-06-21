@@ -314,21 +314,31 @@ const DietRecommended: React.FC<Props> = ({
       // setRecommendations([recommendationsResponse.data.predictions]);
 
       // Prepare data for DietPlan component
+
+      const recommendationsArray = recommendationsResponse.data.predictions;
+      const bestRecommendation = Array.isArray(recommendationsArray)
+        ? recommendationsArray[0]
+        : recommendationsArray;
+
       const dietPlanData: DietPlanData = {
         userInput: data,
-        recommendations: recommendationsResponse.data.predictions,
+        recommendations: bestRecommendation, // <-- Now a single object
         userId: userId,
         metadata: {
           timestamp: new Date().toISOString(),
           formSubmittedAt: new Date().toLocaleString(),
         },
       };
+      console.log("DietPlanData:", dietPlanData);
 
       // Navigate to DietPlan component with data
+      console.log("Best Recommendation:", bestRecommendation);
       navigate("/main-page/diet-plan", {
         state: { dietPlanData },
         replace: false, // Allow back navigation
       });
+
+      console.log("DietplanData Sending:", dietPlanData);
 
       // Refresh dashboard data if callback provided
       if (onRefresh) {
