@@ -103,6 +103,7 @@ export const getAllInputDetailsOfUser = async (
     }
 
     res.status(200).json({
+      userId,
       message: "Input and prediction saved",
       inputDetails,
       dietPlan: diet_plan,

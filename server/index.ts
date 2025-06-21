@@ -2,7 +2,10 @@ import express, { type Express, type Request, type Response } from 'express';
 import dotenv from 'dotenv';
 import cors from 'cors';
 import fetch from 'node-fetch';
+import multer from 'multer';
+import path from 'path';
 import { connectDB } from './config/db';
+import upload from "./middleware/uploadMiddleware";
 
 // Load environment variables
 dotenv.config();
@@ -14,7 +17,9 @@ const PORT = process.env.PORT || 5000;
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(express.static('public'));
+
+app.use("/uploads", express.static(path.join(__dirname, "public/uploads")));
+
 
 // Connect to DB
 connectDB();
