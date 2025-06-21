@@ -7,8 +7,10 @@ import MainPage from "@/pages/MainPage";
 import DietRecommended from "@/pages/DietRecommended";
 import Dashboard from "@/pages/Dashboard";
 import ChatBot from "@/pages/chatbot/ChatBot";
+import DietPlan from "@/pages/DietPlan";
 import axios from "axios";
 import type { DashboardData } from "@/types";
+import NotificationComponent from "@/pages/NotificationComponent";
 
 const AppRoutes = () => {
   const [data, setData] = useState<DashboardData | null>(null);
@@ -111,7 +113,11 @@ const AppRoutes = () => {
             />
           }
         />
+        <Route path="notification" element={<NotificationComponent />} />
         <Route path="chat-bot" element={<ChatBot />} />
+        
+        {/* Add the DietPlan route */}
+        <Route path="diet-plan" element={<DietPlan />} />
       </Route>
     </Routes>
   );
