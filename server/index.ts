@@ -1,4 +1,4 @@
-import express,{ type Express, type Request, type Response } from 'express';
+import express, { type Express, type Request, type Response } from 'express';
 import dotenv from 'dotenv';
 import cors from 'cors';
 import fetch from 'node-fetch';
@@ -29,14 +29,14 @@ import userRoutes from './routes/userRoutes';
 import userInputRoutes from './routes/userInputRoutes';
 import predictedDietRoutes from './routes/predictedDietRoutes';
 import dashboardRoute from './routes/dashboardRoute';
-// import geminiRoute from './routes/geminiRoute'; 
+import geminiRoute from './routes/geminiRoute';
 
 // Register routes
 app.use("/api/user", userRoutes);
 app.use("/api/user", userInputRoutes);
 app.use("/api", predictedDietRoutes);
 app.use("/api", dashboardRoute);
-// app.use("/api", geminiRoute); 
+app.use("/api", geminiRoute);
 
 // FastAPI bridge route
 app.post("/api/fetch", async (req: Request, res: Response) => {

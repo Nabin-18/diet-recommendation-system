@@ -2,11 +2,44 @@ import React from "react";
 import UserDetails from "./Dashboard/UserDetails";
 import type { DashboardData } from "@/types";
 
+
+interface DashboardData {
+  user: {
+    name: string;
+    email: string;  
+  };
+  inputDetails: {
+    age: number;
+    gender: string;
+    weight: number;
+    height: number;
+    activity: string;
+    bmi: number;
+    goal: string;
+    preference: string;
+    mealFrequency: number;
+  };
+  prediction: {
+    carbs: number;
+    fats: number;
+    sugar: number;
+    sodium: number;
+    fiber: number;
+    calories: number;
+    protein: number;
+    bmr: number;
+    tdee: number;
+    targetCalories: number;
+    nutrients: Record<string, number>;
+    recommendedDiet: string;
+  };
+
 interface Props {
   dashboardData: DashboardData | null;
   loading: boolean;
   onRefresh: () => void;
   error?: string | null;
+
 }
 
 const Dashboard: React.FC<Props> = ({
@@ -54,12 +87,10 @@ const Dashboard: React.FC<Props> = ({
 
   return (
     <div className="max-w-4xl mx-auto p-4">
-      {/* User Details */}
+      {/* user details */}
       <div className="mb-6">
         <UserDetails userData={dashboardData} />
       </div>
-
-      <hr className="my-6" />
     </div>
   );
 };
