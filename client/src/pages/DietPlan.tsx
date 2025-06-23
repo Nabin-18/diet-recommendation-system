@@ -15,8 +15,9 @@ import {
   Share2,
   Clock,
 } from "lucide-react";
+import MealCard from "@/components/MealCard";
+import InfoRow from "@/components/InfoRow";
 
-// Enhanced type definitions
 interface MealData {
   Name: string;
   calories: number;
@@ -30,24 +31,6 @@ interface MealData {
   mealType?: string; // breakfast, lunch, dinner, snack
 }
 
-// Old structure for backward compatibility
-interface OldRecommendations {
-  bmi: number;
-  bmr: number;
-  tdee: number;
-  calorie_target: number;
-  Name: string;
-  calories: number;
-  protein: number;
-  carbs: number;
-  fats: number;
-  fiber: number;
-  sugar: number;
-  sodium: number;
-  Instructions: string | string[];
-}
-
-// New structure
 interface NewRecommendations {
   bmi: number;
   bmr: number;
@@ -75,26 +58,6 @@ interface DietPlanData {
   };
 }
 
-// Type for data that might be in old or new format
-interface FlexibleDietPlanData {
-  userInput: {
-    height: number;
-    weight: number;
-    age: number;
-    gender: string;
-    goal: string;
-    activityType: string;
-    preferences: string;
-    healthIssues: string;
-    mealPlan: string;
-    mealFrequency: number;
-  };
-  recommendations: OldRecommendations | NewRecommendations;
-  metadata: {
-    formSubmittedAt: string;
-  };
-}
-
 const DietPlan: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
@@ -102,7 +65,7 @@ const DietPlan: React.FC = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const state = location.state as { dietPlanData?: FlexibleDietPlanData };
+    const state = location.state as { dietPlanData?: DietPlanData };
 
     async function fetchLatestPlan() {
       try {
@@ -150,6 +113,7 @@ const DietPlan: React.FC = () => {
           setDietData(null);
         }
       } catch (e) {
+        console.error("Error fetching latest diet plan:", e);
         setDietData(null);
       } finally {
         setLoading(false);
@@ -157,51 +121,16 @@ const DietPlan: React.FC = () => {
     }
 
     if (state?.dietPlanData) {
-      // If the data has old structure (single meal), convert it
-      const data = state.dietPlanData;
-      if ("Name" in data.recommendations) {
-        // Convert old structure to new structure
-        const oldRec = data.recommendations as OldRecommendations;
-        const convertedData: DietPlanData = {
-          ...data,
-          recommendations: {
-            bmi: oldRec.bmi,
-            bmr: oldRec.bmr,
-            tdee: oldRec.tdee,
-            calorie_target: oldRec.calorie_target,
-            meals: [
-              {
-                Name: oldRec.Name,
-                calories: oldRec.calories,
-                protein: oldRec.protein,
-                carbs: oldRec.carbs,
-                fats: oldRec.fats,
-                fiber: oldRec.fiber,
-                sugar: oldRec.sugar,
-                sodium: oldRec.sodium,
-                Instructions: oldRec.Instructions,
-                mealType: "main",
-              },
-            ],
-          },
-        };
-        setDietData(convertedData);
-      } else {
-        setDietData(data as DietPlanData);
-      }
+      setDietData(state.dietPlanData);
       setLoading(false);
     } else {
       fetchLatestPlan();
     }
   }, [location.state, navigate]);
 
-  const handleBackToForm = () => {
-    navigate(-1);
-  };
+  const handleBackToForm = () => navigate(-1);
 
-  const handleNewPlan = () => {
-    navigate("/main-page/diet-recommend");
-  };
+  const handleNewPlan = () => navigate("/main-page/diet-recommend");
 
   const handleDownload = () => {
     if (!dietData) return;
@@ -292,12 +221,9 @@ ${cleanInstructions
         .filter(Boolean);
     }
     if (typeof instructions === "string") {
-      // try to parse as JSON array
       let str = instructions.trim();
       try {
-        // remove newlines and control characters
         str = str.replace(/[\r\n\t]/g, " ");
-        // replace single quotes with double quotes
         if (str.startsWith("[") && str.endsWith("]")) {
           const arr = JSON.parse(str.replace(/'/g, '"'));
           if (Array.isArray(arr)) {
@@ -307,9 +233,8 @@ ${cleanInstructions
           }
         }
       } catch (error) {
-        // ignore json parse errors
+        console.error("Error parsing instructions:", error);
       }
-      //split on numbered steps or periods
       return str
         .split(/(?=\d+\.\s)|[.!?]\s+/)
         .map((step) => step.replace(/^\d+\.\s*/, "").trim())
@@ -364,30 +289,18 @@ ${cleanInstructions
   const { userInput, recommendations, metadata } = dietData;
   const bmiInfo = getBMICategory(recommendations.bmi);
 
-  let mealsArray: MealData[] = [];
-  if (
-    Array.isArray(recommendations.meals) &&
-    recommendations.meals.length === 1 &&
-    Array.isArray((recommendations.meals[0] as any).meals)
-  ) {
-    mealsArray = (recommendations.meals[0] as any).meals;
-  } else if (Array.isArray(recommendations.meals)) {
-    mealsArray = recommendations.meals;
-  }
+  const mealsArray: MealData[] = recommendations.meals;
 
-  let targets = recommendations;
-  // Calculate total calories from all meals
+  // calculate total calories from all meals
   const totalCalories = mealsArray.reduce(
     (sum, meal) => sum + meal.calories,
     0
   );
-  console.log("Meals array:", mealsArray);
-  console.log("Meals in recommendations:", recommendations.meals);
 
   return (
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-6xl mx-auto px-4">
-        {/* Header */}
+        {/* header */}
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center space-x-4">
             <Button
@@ -417,7 +330,7 @@ ${cleanInstructions
           </div>
         </div>
 
-        {/* Generated Date */}
+        {/* generated Date */}
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center space-x-2 text-sm text-gray-600">
             <Calendar className="w-4 h-4" />
@@ -430,7 +343,7 @@ ${cleanInstructions
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Personal Information */}
+          {/* personal Information */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center space-x-2">
@@ -439,34 +352,22 @@ ${cleanInstructions
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              <div className="flex justify-between">
-                <span className="text-gray-600">Height:</span>
-                <span className="font-medium">{userInput.height} cm</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-600">Weight:</span>
-                <span className="font-medium">{userInput.weight} kg</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-600">Age:</span>
-                <span className="font-medium">{userInput.age} years</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-600">Gender:</span>
-                <span className="font-medium capitalize">
-                  {userInput.gender}
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-600">Goal:</span>
-                <span className="font-medium capitalize">
-                  {userInput.goal ? userInput.goal.replace("_", " ") : "N/A"}
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-600">Activity:</span>
-                <span className="font-medium">{userInput.activityType}</span>
-              </div>
+              <InfoRow label="Height:" value={`${userInput.height} cm`} />
+              <InfoRow label="Weight:" value={`${userInput.weight} kg`} />
+              <InfoRow label="Age:" value={`${userInput.age} years`} />
+              <InfoRow
+                label="Gender:"
+                value={<span className="capitalize">{userInput.gender}</span>}
+              />
+              <InfoRow
+                label="Goal:"
+                value={
+                  <span className="capitalize">
+                    {userInput.goal ? userInput.goal.replace("_", " ") : "N/A"}
+                  </span>
+                }
+              />
+              <InfoRow label="Activity:" value={userInput.activityType} />
             </CardContent>
           </Card>
 
@@ -483,8 +384,8 @@ ${cleanInstructions
                 <span className="text-gray-600">BMI:</span>
                 <div className="flex items-center space-x-2">
                   <span className="font-medium">
-                    {typeof targets.bmi === "number"
-                      ? targets.bmi.toFixed(1)
+                    {typeof recommendations.bmi === "number"
+                      ? recommendations.bmi.toFixed(1)
                       : "N/A"}
                   </span>
                   <Badge className={bmiInfo.color}>{bmiInfo.category}</Badge>
@@ -493,20 +394,26 @@ ${cleanInstructions
               <div className="flex justify-between">
                 <span className="text-gray-600">BMR:</span>
                 <span className="font-medium">
-                  {typeof targets.bmr === "number" ? targets.bmr : "N/A"} cal
+                  {typeof recommendations.bmr === "number"
+                    ? recommendations.bmr
+                    : "N/A"}{" "}
+                  cal
                 </span>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-600">TDEE:</span>
                 <span className="font-medium">
-                  {typeof targets.tdee === "number" ? targets.tdee : "N/A"} cal
+                  {typeof recommendations.tdee === "number"
+                    ? recommendations.tdee
+                    : "N/A"}{" "}
+                  cal
                 </span>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-600">Daily Target:</span>
                 <span className="font-medium text-blue-600">
-                  {typeof targets.calorie_target === "number"
-                    ? targets.calorie_target
+                  {typeof recommendations.calorie_target === "number"
+                    ? recommendations.calorie_target
                     : "N/A"}{" "}
                   cal
                 </span>
@@ -555,91 +462,14 @@ ${cleanInstructions
 
         {/* Recommended Meals */}
         <div className="mt-6 space-y-6">
-          {mealsArray.map((meal, index) => {
-            const cleanInstructions = getCleanInstructions(meal.Instructions);
-
-            return (
-              <Card key={index}>
-                <CardHeader>
-                  <CardTitle className="flex items-center justify-between">
-                    <div className="flex items-center space-x-2">
-                      <Utensils className="w-5 h-5" />
-                      <span>
-                        Meal {index + 1}: {meal.Name}
-                      </span>
-                    </div>
-                    {meal.mealType && (
-                      <Badge variant="outline" className="capitalize">
-                        {meal.mealType}
-                      </Badge>
-                    )}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4 mb-6">
-                    <div className="text-center">
-                      <div className="text-2xl font-bold text-blue-600">
-                        {meal.calories}
-                      </div>
-                      <div className="text-sm text-gray-600">Calories</div>
-                    </div>
-                    <div className="text-center">
-                      <div className="text-2xl font-bold text-green-600">
-                        {meal.protein}g
-                      </div>
-                      <div className="text-sm text-gray-600">Protein</div>
-                    </div>
-                    <div className="text-center">
-                      <div className="text-2xl font-bold text-yellow-600">
-                        {meal.carbs}g
-                      </div>
-                      <div className="text-sm text-gray-600">Carbs</div>
-                    </div>
-                    <div className="text-center">
-                      <div className="text-2xl font-bold text-purple-600">
-                        {meal.fats}g
-                      </div>
-                      <div className="text-sm text-gray-600">Fats</div>
-                    </div>
-                    <div className="text-center">
-                      <div className="text-2xl font-bold text-orange-600">
-                        {meal.fiber}g
-                      </div>
-                      <div className="text-sm text-gray-600">Fiber</div>
-                    </div>
-                    <div className="text-center">
-                      <div className="text-2xl font-bold text-red-600">
-                        {meal.sugar}g
-                      </div>
-                      <div className="text-sm text-gray-600">Sugar</div>
-                    </div>
-                    <div className="text-center">
-                      <div className="text-2xl font-bold text-gray-600">
-                        {meal.sodium}mg
-                      </div>
-                      <div className="text-sm text-gray-600">Sodium</div>
-                    </div>
-                  </div>
-
-                  {/* Instructions */}
-                  {cleanInstructions.length > 0 && (
-                    <div className="bg-blue-50 rounded-lg p-4">
-                      <h3 className="font-semibold text-blue-900 mb-2">
-                        Instructions:
-                      </h3>
-                      <ol className="list-decimal list-inside space-y-2 text-blue-800 leading-relaxed">
-                        {cleanInstructions.map((step: string, idx: number) => (
-                          <li key={idx} className="pl-1">
-                            {step}
-                          </li>
-                        ))}
-                      </ol>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            );
-          })}
+          {mealsArray.map((meal, index) => (
+            <MealCard
+              key={index}
+              meal={meal}
+              index={index}
+              instructions={getCleanInstructions(meal.Instructions)}
+            />
+          ))}
         </div>
 
         {/* Action Buttons */}
