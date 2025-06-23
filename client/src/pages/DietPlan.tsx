@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import axios from "axios";
 import {
   ArrowLeft,
   User,
@@ -102,8 +103,58 @@ const DietPlan: React.FC = () => {
 
   useEffect(() => {
     const state = location.state as { dietPlanData?: FlexibleDietPlanData };
-    
 
+    async function fetchLatestPlan() {
+      try {
+        const token = localStorage.getItem("token");
+        if (!token) {
+          setDietData(null);
+          setLoading(false);
+          navigate("/login");
+          return;
+        }
+        const res = await axios.get("/api/latest-prediction", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const { latestPrediction, latestUserInput } = res.data;
+        if (latestPrediction && latestUserInput) {
+          const convertedData: DietPlanData = {
+            userInput: {
+              height: latestUserInput.height,
+              weight: latestUserInput.weight,
+              age: latestUserInput.age,
+              gender: latestUserInput.gender,
+              goal: latestUserInput.goal,
+              activityType: latestUserInput.activityType,
+              preferences: latestUserInput.preferences,
+              healthIssues: latestUserInput.healthIssues,
+              mealPlan: latestUserInput.mealPlan,
+              mealFrequency: latestUserInput.mealFrequency,
+            },
+            recommendations: {
+              bmi: latestPrediction.bmi,
+              bmr: latestPrediction.bmr,
+              tdee: latestPrediction.tdee,
+              calorie_target: latestPrediction.calorie_target,
+              meals: Array.isArray(latestPrediction.meals)
+                ? latestPrediction.meals
+                : [],
+            },
+            metadata: {
+              formSubmittedAt:
+                latestPrediction.predictionDate || new Date().toISOString(),
+            },
+          };
+          setDietData(convertedData);
+        } else {
+          setDietData(null);
+        }
+      } catch (e) {
+        setDietData(null);
+      } finally {
+        setLoading(false);
+      }
+    }
 
     if (state?.dietPlanData) {
       // If the data has old structure (single meal), convert it
@@ -140,14 +191,9 @@ const DietPlan: React.FC = () => {
       }
       setLoading(false);
     } else {
-      console.warn("No diet plan data found in navigation state");
-      handleNoData();
+      fetchLatestPlan();
     }
-  }, [location.state]);
-
-  const handleNoData = () => {
-    setLoading(false);
-  };
+  }, [location.state, navigate]);
 
   const handleBackToForm = () => {
     navigate(-1);
@@ -238,42 +284,6 @@ ${cleanInstructions
     }
   };
 
-  // const getCleanInstructions = (instructions: string | string[]): string[] => {
-  //   let text = "";
-
-  //   if (Array.isArray(instructions)) {
-  //     // Handle nested arrays and mixed formats
-  //     const flatInstructions = instructions.flat();
-  //     text = flatInstructions.join(" ");
-  //   } else if (typeof instructions === "string") {
-  //     text = instructions;
-  //   }
-
-  //   // Remove array brackets and quotes if present
-  //   text = text.replace(/^\[|\]$/g, '').replace(/^['"]|['"]$/g, '');
-
-  //   // Split on numbered patterns (1., 2., etc.) but preserve the content
-  //   let steps = text.split(/(?=\d+\.\s)/).map(step => step.trim()).filter(Boolean);
-
-  //   // If no numbered steps found, try other delimiters
-  //   if (steps.length <= 1) {
-  //     steps = text.split(/[.!?]\s+/).map(step => step.trim()).filter(Boolean);
-  //   }
-
-  //   // Clean up each step
-  //   steps = steps.map(step => {
-  //     // Remove leading numbers and dots
-  //     step = step.replace(/^\d+\.\s*/, '');
-  //     // Remove quotes and array artifacts
-  //     step = step.replace(/^['"\[,\s]+|['"\],\s]*$/g, '');
-  //     // Capitalize first letter
-  //     step = step.charAt(0).toUpperCase() + step.slice(1);
-  //     return step;
-  //   }).filter(step => step.length > 0);
-
-  //   return steps;
-  // };
-
   const getCleanInstructions = (instructions: string | string[]): string[] => {
     if (Array.isArray(instructions)) {
       return instructions
@@ -282,11 +292,12 @@ ${cleanInstructions
         .filter(Boolean);
     }
     if (typeof instructions === "string") {
-      // Try to parse stringified array
+      // try to parse as JSON array
+      let str = instructions.trim();
       try {
-        // Remove leading number and dot if present
-        const str = instructions.replace(/^\d+\.\s*/, "");
-        // Try to parse as JSON array
+        // remove newlines and control characters
+        str = str.replace(/[\r\n\t]/g, " ");
+        // replace single quotes with double quotes
         if (str.startsWith("[") && str.endsWith("]")) {
           const arr = JSON.parse(str.replace(/'/g, '"'));
           if (Array.isArray(arr)) {
@@ -295,21 +306,18 @@ ${cleanInstructions
               .filter(Boolean);
           }
         }
-      } catch (e) {
-        // Fallback: split on numbered steps or periods
-        return instructions
-          .split(/(?=\d+\.\s)/)
-          .map((step) => step.replace(/^\d+\.\s*/, "").trim())
-          .filter(Boolean);
+      } catch (error) {
+        // ignore json parse errors
       }
-      // Fallback: split on periods
-      return instructions
-        .split(/[.!?]\s+/)
-        .map((step) => step.trim())
+      //split on numbered steps or periods
+      return str
+        .split(/(?=\d+\.\s)|[.!?]\s+/)
+        .map((step) => step.replace(/^\d+\.\s*/, "").trim())
         .filter(Boolean);
     }
     return [];
   };
+
   const getBMICategory = (bmi: number) => {
     if (bmi < 18.5)
       return { category: "Underweight", color: "bg-blue-100 text-blue-800" };
@@ -360,38 +368,20 @@ ${cleanInstructions
   if (
     Array.isArray(recommendations.meals) &&
     recommendations.meals.length === 1 &&
-    "meals" in recommendations.meals[0]
+    Array.isArray((recommendations.meals[0] as any).meals)
   ) {
-    // If meals is [{ meals: [...] }], flatten it
-    mealsArray = (recommendations.meals[0] as { meals: MealData[] }).meals;
-  } else {
-    mealsArray = recommendations.meals as MealData[];
+    mealsArray = (recommendations.meals[0] as any).meals;
+  } else if (Array.isArray(recommendations.meals)) {
+    mealsArray = recommendations.meals;
   }
 
   let targets = recommendations;
-  if (
-    Array.isArray(recommendations.meals) &&
-    recommendations.meals.length === 1 &&
-    "bmi" in recommendations.meals[0]
-  ) {
-    // Only merge known numeric fields if they exist and are numbers
-    const meal0 = recommendations.meals[0] as Partial<NewRecommendations>;
-    targets = {
-      ...recommendations,
-      bmi: typeof meal0.bmi === "number" ? meal0.bmi : recommendations.bmi,
-      bmr: typeof meal0.bmr === "number" ? meal0.bmr : recommendations.bmr,
-      tdee: typeof meal0.tdee === "number" ? meal0.tdee : recommendations.tdee,
-      calorie_target:
-        typeof meal0.calorie_target === "number"
-          ? meal0.calorie_target
-          : recommendations.calorie_target,
-    };
-  }
   // Calculate total calories from all meals
   const totalCalories = mealsArray.reduce(
     (sum, meal) => sum + meal.calories,
     0
   );
+  console.log("Meals array:", mealsArray);
   console.log("Meals in recommendations:", recommendations.meals);
 
   return (
@@ -470,7 +460,7 @@ ${cleanInstructions
               <div className="flex justify-between">
                 <span className="text-gray-600">Goal:</span>
                 <span className="font-medium capitalize">
-                  {userInput.goal.replace("_", " ")}
+                  {userInput.goal ? userInput.goal.replace("_", " ") : "N/A"}
                 </span>
               </div>
               <div className="flex justify-between">
@@ -503,19 +493,13 @@ ${cleanInstructions
               <div className="flex justify-between">
                 <span className="text-gray-600">BMR:</span>
                 <span className="font-medium">
-                  {typeof targets.bmr === "number"
-                    ? targets.bmr
-                    : "N/A"}{" "}
-                  cal
+                  {typeof targets.bmr === "number" ? targets.bmr : "N/A"} cal
                 </span>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-600">TDEE:</span>
                 <span className="font-medium">
-                  {typeof targets.tdee === "number"
-                    ? targets.tdee
-                    : "N/A"}{" "}
-                  cal
+                  {typeof targets.tdee === "number" ? targets.tdee : "N/A"} cal
                 </span>
               </div>
               <div className="flex justify-between">

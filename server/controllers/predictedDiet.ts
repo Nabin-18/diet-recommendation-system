@@ -17,37 +17,19 @@ export const savePrediction = async (
   try {
     const {
       userId,
-      protein,
-      calories,
-      sugar,
-      fats,
-      Name,
-      carbs,
-      sodium,
-      fiber,
-      Instructions,
-      image,
-      tdee,
-      calorie_target,
+      meals, // Array of meals
       bmr,
+      tdee,
       bmi,
+      calorie_target,
     } = req.body;
 
     const prediction = await prisma.predictedDetails.create({
       data: {
         userId,
-        protein,
-        calories,
-        sugar,
-        fats,
-        Name,
-        carbs,
-        sodium,
-        fiber,
-        Instructions,
-        image,
-        tdee,
+        meals: Array.isArray(meals) ? meals : [],
         bmr,
+        tdee,
         bmi,
         calorie_target,
       },
@@ -82,11 +64,38 @@ export const getPredictedDetails = async (
       take: mealFrequency,
     });
 
-    const latest = predictions[0] || {};
-
-    res.status(200).json({ predictions: [{ ...latest, meals: predictions }] });
+    res.status(200).json({ predictions });
   } catch (error) {
     console.error("Error fetching predictions:", error);
     res.status(500).json({ message: "Failed to fetch predictions" });
+  }
+};
+
+// get the latest predicted diet details
+export const getLatestDietPlan = async (
+  req: AuthenticatedRequest,
+  res: Response
+) => {
+  const userId = req.user?.id;
+  if (!userId) {
+    return res.status(401).json({ message: "Unauthorized" });
+  }
+  try {
+    const latestPrediction = await prisma.predictedDetails.findFirst({
+      where: { userId },
+      orderBy: { predictionDate: "desc" },
+    });
+
+    const latestUserInput = await prisma.userInputDetails.findFirst({
+      where: { userId },
+      orderBy: { createdAt: "desc" },
+    });
+
+    res.status(200).json({
+      latestPrediction,
+      latestUserInput,
+    });
+  } catch (error) {
+    res.status(500).json({ message: "Failed to fetch latest diet plan" });
   }
 };
