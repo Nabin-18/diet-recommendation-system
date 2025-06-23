@@ -41,7 +41,7 @@ const AppRoutes = () => {
           headers: { Authorization: `Bearer ${token}` },
         });
         
-        console.log("Fetch Dashboard", JSON.stringify(res.data));
+        // console.log("Fetch Dashboard", JSON.stringify(res.data));
         setData(res.data);
       } catch (err) {
         console.error("Error fetching dashboard data:", err);

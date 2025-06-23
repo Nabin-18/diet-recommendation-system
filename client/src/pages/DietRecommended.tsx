@@ -17,6 +17,7 @@ import { useState, useEffect } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import type { DashboardData } from "@/types";
+// import { Label } from "recharts";
 
 // Form input schema (strings from form inputs)
 const dietFormInputSchema = z.object({
@@ -128,7 +129,9 @@ interface Recommendation {
 // Data structure to pass to DietPlan component
 export interface DietPlanData {
   userInput: DietFormData;
-  recommendations: Recommendation;
+  recommendations: {
+    meals: Recommendation[];
+  };
   userId: string;
   metadata: {
     timestamp: string;
@@ -262,10 +265,10 @@ const DietRecommended: React.FC<Props> = ({
     }
 
     try {
-      // Transform and validate the data
+      // transform and validate the data
       const data = dietFormSchema.parse(inputData);
 
-      // Send user input to backend
+      // send user input to backend
       const response = await axios.post(
         "http://localhost:5000/api/user/user-input",
         data,
@@ -290,14 +293,12 @@ const DietRecommended: React.FC<Props> = ({
 
       // Fetch diet recommendations
       const recommendationsResponse = await axios.get(
-        `http://localhost:5000/api/prediction/${userId}`,
+        `http://localhost:5000/api/prediction/${userId}?mealFrequency=${data.mealFrequency}`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }
       );
-
-      // Better recommendations validation
-      console.log("Recommendations response:", recommendationsResponse.data); // Debug logging
+      console.log("Recommendations response:", recommendationsResponse.data);
 
       if (!recommendationsResponse.data) {
         throw new Error("No recommendations data received from server");
@@ -316,23 +317,28 @@ const DietRecommended: React.FC<Props> = ({
       // Prepare data for DietPlan component
 
       const recommendationsArray = recommendationsResponse.data.predictions;
-      const bestRecommendation = Array.isArray(recommendationsArray)
-        ? recommendationsArray[0]
-        : recommendationsArray;
+
+      const allMeals = Array.isArray(recommendationsArray)
+        ? recommendationsArray
+        : [recommendationsArray];
+      // Only keep the latest meals according to mealFrequency
+      const mealFrequency = data.mealFrequency;
+      const latestMeals = allMeals.slice(-mealFrequency); // get last N meals
 
       const dietPlanData: DietPlanData = {
         userInput: data,
-        recommendations: bestRecommendation, // <-- Now a single object
+        recommendations: {
+          meals: latestMeals, // Only pass the latest meals
+        },
         userId: userId,
         metadata: {
           timestamp: new Date().toISOString(),
           formSubmittedAt: new Date().toLocaleString(),
         },
       };
-      console.log("DietPlanData:", dietPlanData);
+      console.log("DietPlanData according to freq:", dietPlanData);
 
       // Navigate to DietPlan component with data
-      console.log("Best Recommendation:", bestRecommendation);
       navigate("/main-page/diet-plan", {
         state: { dietPlanData },
         replace: false, // Allow back navigation
@@ -430,10 +436,15 @@ const DietRecommended: React.FC<Props> = ({
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
+                <label
+                  htmlFor="height"
+                  className="block text-sm font-semibold text-gray-800 mb-1">
+                  Height (cm)
+                </label>
                 <Input
                   {...register("height")}
                   placeholder="Height (cm) e.g. 170"
-                  className="rounded-[8px] focus-visible:ring-0 shadow-none"
+                  className="rounded-[8px] focus-visible:ring-0 shadow-none placeholder:text-gray-400"
                   disabled={isFormLoading}
                 />
                 {errors.height && (
@@ -444,10 +455,15 @@ const DietRecommended: React.FC<Props> = ({
               </div>
 
               <div>
+                <label
+                  htmlFor="weight"
+                  className="block text-sm font-bold text-gray-800 mb-1">
+                  Weight (kg)
+                </label>
                 <Input
                   {...register("weight")}
                   placeholder="Weight (kg) e.g. 65"
-                  className="rounded-[8px] focus-visible:ring-0 shadow-none"
+                  className="rounded-[8px] focus-visible:ring-0 shadow-none placeholder:text-gray-400"
                   disabled={isFormLoading}
                 />
                 {errors.weight && (
@@ -458,10 +474,15 @@ const DietRecommended: React.FC<Props> = ({
               </div>
 
               <div>
+                <label
+                  htmlFor="age"
+                  className="block text-sm font-semibold text-gray-800 mb-1">
+                  Age (years)
+                </label>
                 <Input
                   {...register("age")}
                   placeholder="Age (years) e.g. 25"
-                  className="rounded-[8px] focus-visible:ring-0 shadow-none"
+                  className="rounded-[8px] focus-visible:ring-0 shadow-none placeholder:text-gray-400"
                   disabled={isFormLoading}
                 />
                 {errors.age && (
@@ -472,6 +493,11 @@ const DietRecommended: React.FC<Props> = ({
               </div>
 
               <div>
+                <label
+                  htmlFor="gender"
+                  className="block text-sm font-semibold text-gray-800 mb-1">
+                  Gender
+                </label>
                 <Controller
                   control={control}
                   name="gender"
@@ -505,6 +531,11 @@ const DietRecommended: React.FC<Props> = ({
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               <div>
+                <label
+                  htmlFor="goal"
+                  className="block text-sm font-semibold text-gray-800 mb-1">
+                  Fitness Goal
+                </label>
                 <Controller
                   control={control}
                   name="goal"
@@ -534,6 +565,11 @@ const DietRecommended: React.FC<Props> = ({
               </div>
 
               <div>
+                <label
+                  htmlFor="activityType"
+                  className="block text-sm font-semibold text-gray-800 mb-1">
+                  Primary Activity
+                </label>
                 <Controller
                   control={control}
                   name="activityType"
@@ -565,6 +601,12 @@ const DietRecommended: React.FC<Props> = ({
               </div>
 
               <div>
+                <label
+                  htmlFor="preferences"
+                  className="block text-sm font-semibold text-gray-800 mb-1">
+                  Diet Preference
+                </label>
+
                 <Controller
                   control={control}
                   name="preferences"
@@ -593,6 +635,11 @@ const DietRecommended: React.FC<Props> = ({
               </div>
 
               <div>
+                <label
+                  htmlFor="healthIssues"
+                  className="block text-sm font-semibold text-gray-800 mb-1">
+                  Health Condition
+                </label>
                 <Controller
                   control={control}
                   name="healthIssues"

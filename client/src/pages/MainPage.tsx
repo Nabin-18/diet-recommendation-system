@@ -3,11 +3,11 @@ import { Button } from "@/components/ui/button";
 import {
   Bell,
   User,
-  MessageCircle,
+  // MessageCircle,
   Utensils,
   NotebookPen,
   Activity,
-  Settings,
+  // Settings,
 } from "lucide-react";
 import { useState } from "react";
 
@@ -54,17 +54,17 @@ const MainPage = () => {
       notifications: notificationCount,
       description: "View all notifications",
     },
-    {
-      to: "chat-bot",
-      label: "Virtual Doctor",
-      icon: <MessageCircle className="w-5 h-5" />,
-      gradient: "from-violet-500 to-purple-600",
-      notifications: notifications.virtualDoctor,
-      description: "AI consultation",
-    },
+    // {
+    //   to: "chat-bot",
+    //   label: "Chat Bot",
+    //   icon: <MessageCircle className="w-5 h-5" />,
+    //   gradient: "from-violet-500 to-purple-600",
+    //   notifications: notifications.virtualDoctor,
+    //   description: "AI consultation",
+    // },
   ];
 
-  const totalNotifications = notificationCount;
+  // const totalNotifications = notificationCount;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
