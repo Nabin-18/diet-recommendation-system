@@ -102,11 +102,13 @@ const DietPlan: React.FC = () => {
 
   useEffect(() => {
     const state = location.state as { dietPlanData?: FlexibleDietPlanData };
+    
+
 
     if (state?.dietPlanData) {
       // If the data has old structure (single meal), convert it
       const data = state.dietPlanData;
-      if ('Name' in data.recommendations) {
+      if ("Name" in data.recommendations) {
         // Convert old structure to new structure
         const oldRec = data.recommendations as OldRecommendations;
         const convertedData: DietPlanData = {
@@ -116,19 +118,21 @@ const DietPlan: React.FC = () => {
             bmr: oldRec.bmr,
             tdee: oldRec.tdee,
             calorie_target: oldRec.calorie_target,
-            meals: [{
-              Name: oldRec.Name,
-              calories: oldRec.calories,
-              protein: oldRec.protein,
-              carbs: oldRec.carbs,
-              fats: oldRec.fats,
-              fiber: oldRec.fiber,
-              sugar: oldRec.sugar,
-              sodium: oldRec.sodium,
-              Instructions: oldRec.Instructions,
-              mealType: 'main'
-            }]
-          }
+            meals: [
+              {
+                Name: oldRec.Name,
+                calories: oldRec.calories,
+                protein: oldRec.protein,
+                carbs: oldRec.carbs,
+                fats: oldRec.fats,
+                fiber: oldRec.fiber,
+                sugar: oldRec.sugar,
+                sodium: oldRec.sodium,
+                Instructions: oldRec.Instructions,
+                mealType: "main",
+              },
+            ],
+          },
         };
         setDietData(convertedData);
       } else {
@@ -194,7 +198,9 @@ ${index + 1}. ${meal.Name.toUpperCase()}
 - Sodium: ${meal.sodium}mg
 
 INSTRUCTIONS:
-${cleanInstructions.map((instruction, idx) => `${idx + 1}. ${instruction}`).join('\n')}
+${cleanInstructions
+  .map((instruction, idx) => `${idx + 1}. ${instruction}`)
+  .join("\n")}
 `;
     });
 
@@ -232,42 +238,78 @@ ${cleanInstructions.map((instruction, idx) => `${idx + 1}. ${instruction}`).join
     }
   };
 
+  // const getCleanInstructions = (instructions: string | string[]): string[] => {
+  //   let text = "";
+
+  //   if (Array.isArray(instructions)) {
+  //     // Handle nested arrays and mixed formats
+  //     const flatInstructions = instructions.flat();
+  //     text = flatInstructions.join(" ");
+  //   } else if (typeof instructions === "string") {
+  //     text = instructions;
+  //   }
+
+  //   // Remove array brackets and quotes if present
+  //   text = text.replace(/^\[|\]$/g, '').replace(/^['"]|['"]$/g, '');
+
+  //   // Split on numbered patterns (1., 2., etc.) but preserve the content
+  //   let steps = text.split(/(?=\d+\.\s)/).map(step => step.trim()).filter(Boolean);
+
+  //   // If no numbered steps found, try other delimiters
+  //   if (steps.length <= 1) {
+  //     steps = text.split(/[.!?]\s+/).map(step => step.trim()).filter(Boolean);
+  //   }
+
+  //   // Clean up each step
+  //   steps = steps.map(step => {
+  //     // Remove leading numbers and dots
+  //     step = step.replace(/^\d+\.\s*/, '');
+  //     // Remove quotes and array artifacts
+  //     step = step.replace(/^['"\[,\s]+|['"\],\s]*$/g, '');
+  //     // Capitalize first letter
+  //     step = step.charAt(0).toUpperCase() + step.slice(1);
+  //     return step;
+  //   }).filter(step => step.length > 0);
+
+  //   return steps;
+  // };
+
   const getCleanInstructions = (instructions: string | string[]): string[] => {
-    let text = "";
-    
     if (Array.isArray(instructions)) {
-      // Handle nested arrays and mixed formats
-      const flatInstructions = instructions.flat();
-      text = flatInstructions.join(" ");
-    } else if (typeof instructions === "string") {
-      text = instructions;
+      return instructions
+        .flat()
+        .map((step) => step.trim())
+        .filter(Boolean);
     }
-
-    // Remove array brackets and quotes if present
-    text = text.replace(/^\[|\]$/g, '').replace(/^['"]|['"]$/g, '');
-    
-    // Split on numbered patterns (1., 2., etc.) but preserve the content
-    let steps = text.split(/(?=\d+\.\s)/).map(step => step.trim()).filter(Boolean);
-    
-    // If no numbered steps found, try other delimiters
-    if (steps.length <= 1) {
-      steps = text.split(/[.!?]\s+/).map(step => step.trim()).filter(Boolean);
+    if (typeof instructions === "string") {
+      // Try to parse stringified array
+      try {
+        // Remove leading number and dot if present
+        const str = instructions.replace(/^\d+\.\s*/, "");
+        // Try to parse as JSON array
+        if (str.startsWith("[") && str.endsWith("]")) {
+          const arr = JSON.parse(str.replace(/'/g, '"'));
+          if (Array.isArray(arr)) {
+            return arr
+              .map((step: string) => step.replace(/^\d+\.\s*/, "").trim())
+              .filter(Boolean);
+          }
+        }
+      } catch (e) {
+        // Fallback: split on numbered steps or periods
+        return instructions
+          .split(/(?=\d+\.\s)/)
+          .map((step) => step.replace(/^\d+\.\s*/, "").trim())
+          .filter(Boolean);
+      }
+      // Fallback: split on periods
+      return instructions
+        .split(/[.!?]\s+/)
+        .map((step) => step.trim())
+        .filter(Boolean);
     }
-    
-    // Clean up each step
-    steps = steps.map(step => {
-      // Remove leading numbers and dots
-      step = step.replace(/^\d+\.\s*/, '');
-      // Remove quotes and array artifacts
-      step = step.replace(/^['"\[,\s]+|['"\],\s]*$/g, '');
-      // Capitalize first letter
-      step = step.charAt(0).toUpperCase() + step.slice(1);
-      return step;
-    }).filter(step => step.length > 0);
-
-    return steps;
+    return [];
   };
-
   const getBMICategory = (bmi: number) => {
     if (bmi < 18.5)
       return { category: "Underweight", color: "bg-blue-100 text-blue-800" };
@@ -314,8 +356,43 @@ ${cleanInstructions.map((instruction, idx) => `${idx + 1}. ${instruction}`).join
   const { userInput, recommendations, metadata } = dietData;
   const bmiInfo = getBMICategory(recommendations.bmi);
 
+  let mealsArray: MealData[] = [];
+  if (
+    Array.isArray(recommendations.meals) &&
+    recommendations.meals.length === 1 &&
+    "meals" in recommendations.meals[0]
+  ) {
+    // If meals is [{ meals: [...] }], flatten it
+    mealsArray = (recommendations.meals[0] as { meals: MealData[] }).meals;
+  } else {
+    mealsArray = recommendations.meals as MealData[];
+  }
+
+  let targets = recommendations;
+  if (
+    Array.isArray(recommendations.meals) &&
+    recommendations.meals.length === 1 &&
+    "bmi" in recommendations.meals[0]
+  ) {
+    // Only merge known numeric fields if they exist and are numbers
+    const meal0 = recommendations.meals[0] as Partial<NewRecommendations>;
+    targets = {
+      ...recommendations,
+      bmi: typeof meal0.bmi === "number" ? meal0.bmi : recommendations.bmi,
+      bmr: typeof meal0.bmr === "number" ? meal0.bmr : recommendations.bmr,
+      tdee: typeof meal0.tdee === "number" ? meal0.tdee : recommendations.tdee,
+      calorie_target:
+        typeof meal0.calorie_target === "number"
+          ? meal0.calorie_target
+          : recommendations.calorie_target,
+    };
+  }
   // Calculate total calories from all meals
-  const totalCalories = recommendations.meals.reduce((sum, meal) => sum + meal.calories, 0);
+  const totalCalories = mealsArray.reduce(
+    (sum, meal) => sum + meal.calories,
+    0
+  );
+  console.log("Meals in recommendations:", recommendations.meals);
 
   return (
     <div className="min-h-screen bg-gray-50 py-8">
@@ -416,8 +493,8 @@ ${cleanInstructions.map((instruction, idx) => `${idx + 1}. ${instruction}`).join
                 <span className="text-gray-600">BMI:</span>
                 <div className="flex items-center space-x-2">
                   <span className="font-medium">
-                    {typeof recommendations.bmi === "number"
-                      ? recommendations.bmi.toFixed(1)
+                    {typeof targets.bmi === "number"
+                      ? targets.bmi.toFixed(1)
                       : "N/A"}
                   </span>
                   <Badge className={bmiInfo.color}>{bmiInfo.category}</Badge>
@@ -426,8 +503,8 @@ ${cleanInstructions.map((instruction, idx) => `${idx + 1}. ${instruction}`).join
               <div className="flex justify-between">
                 <span className="text-gray-600">BMR:</span>
                 <span className="font-medium">
-                  {typeof recommendations.bmr === "number"
-                    ? recommendations.bmr
+                  {typeof targets.bmr === "number"
+                    ? targets.bmr
                     : "N/A"}{" "}
                   cal
                 </span>
@@ -435,8 +512,8 @@ ${cleanInstructions.map((instruction, idx) => `${idx + 1}. ${instruction}`).join
               <div className="flex justify-between">
                 <span className="text-gray-600">TDEE:</span>
                 <span className="font-medium">
-                  {typeof recommendations.tdee === "number"
-                    ? recommendations.tdee
+                  {typeof targets.tdee === "number"
+                    ? targets.tdee
                     : "N/A"}{" "}
                   cal
                 </span>
@@ -444,8 +521,8 @@ ${cleanInstructions.map((instruction, idx) => `${idx + 1}. ${instruction}`).join
               <div className="flex justify-between">
                 <span className="text-gray-600">Daily Target:</span>
                 <span className="font-medium text-blue-600">
-                  {typeof recommendations.calorie_target === "number"
-                    ? recommendations.calorie_target
+                  {typeof targets.calorie_target === "number"
+                    ? targets.calorie_target
                     : "N/A"}{" "}
                   cal
                 </span>
@@ -453,7 +530,7 @@ ${cleanInstructions.map((instruction, idx) => `${idx + 1}. ${instruction}`).join
               <div className="flex justify-between">
                 <span className="text-gray-600">Plan Total:</span>
                 <span className="font-medium text-green-600">
-                  {totalCalories} cal
+                  {totalCalories.toFixed(1)} cal
                 </span>
               </div>
             </CardContent>
@@ -494,16 +571,18 @@ ${cleanInstructions.map((instruction, idx) => `${idx + 1}. ${instruction}`).join
 
         {/* Recommended Meals */}
         <div className="mt-6 space-y-6">
-          {recommendations.meals.map((meal, index) => {
+          {mealsArray.map((meal, index) => {
             const cleanInstructions = getCleanInstructions(meal.Instructions);
-            
+
             return (
               <Card key={index}>
                 <CardHeader>
                   <CardTitle className="flex items-center justify-between">
                     <div className="flex items-center space-x-2">
                       <Utensils className="w-5 h-5" />
-                      <span>Meal {index + 1}: {meal.Name}</span>
+                      <span>
+                        Meal {index + 1}: {meal.Name}
+                      </span>
                     </div>
                     {meal.mealType && (
                       <Badge variant="outline" className="capitalize">
