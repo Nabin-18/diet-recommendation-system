@@ -1,6 +1,6 @@
 import React from "react";
 import UserDetails from "./Dashboard/UserDetails";
-import type { DashboardData } from "@/types";
+// import type { DashboardData } from "@/types";
 
 
 interface DashboardData {
@@ -33,6 +33,7 @@ interface DashboardData {
     nutrients: Record<string, number>;
     recommendedDiet: string;
   };
+}
 
 interface Props {
   dashboardData: DashboardData | null;
