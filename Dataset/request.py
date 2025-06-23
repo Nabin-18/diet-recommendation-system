@@ -1,17 +1,16 @@
 import requests
 
 user_input = {
-    'gender': 0,  # 0 for female, 1 for male
-    'age': 40,
-    'height_cm': 150,
-    'weight_kg': 70,
-    'goal': 'wt-loss',
-    'Type': 'vegetarian',
-    'meal_type': 'lunch',
-    'health_conditions': ['hypertension'],
-    'meal_frequency': 3,
-    'activity_type': 'yoga'
-}
+        'gender': 0,  # 1 for male, 0 for female
+        'age': 20,
+        'height_cm': 150,
+        'weight_kg': 50,
+        'goal': 'maintain',
+        'Type': 'vegetarian',
+        'meal_type': 'general',
+        'health_conditions': ['hypertension'],  # e.g. ['diabetes', 'hypertension'],
+        'activity_type': 'yoga'
+    }
 
 response = requests.post("http://127.0.0.1:8000/recommend", json=user_input)
 print(response.json())
