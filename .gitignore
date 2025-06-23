@@ -7,5 +7,6 @@ cleaned_recipes.csv
 node_modules
 generated
 .env
+/Dataset/env
 
 __pycache__/
