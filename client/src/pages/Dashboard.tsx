@@ -1,14 +1,12 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import { useEffect, useState } from "react";
+import React from "react";
 import UserDetails from "./Dashboard/UserDetails";
-import NutritionDetails from "./Dashboard/NutritionDetails";
-// import Instructions from "./Dashboard/Instructions";
-import axios from "axios";
+// import type { DashboardData } from "@/types";
+
 
 interface DashboardData {
   user: {
     name: string;
-    email: string;
+    email: string;  
   };
   inputDetails: {
     age: number;
@@ -37,57 +35,63 @@ interface DashboardData {
   };
 }
 
-const Dashboard = () => {
-  const [data, setData] = useState<DashboardData | null>(null);
-  const [loading, setLoading] = useState(true);
+interface Props {
+  dashboardData: DashboardData | null;
+  loading: boolean;
+  onRefresh: () => void;
+  error?: string | null;
 
-  useEffect(() => {
-    const fetchData = async () => {
-      const token = localStorage.getItem("token");
-      if (!token) {
-        console.error("Token not found in localStorage");
-        setLoading(false);
-        return;
-      }
+}
 
-      try {
-        const res = await axios.get("http://localhost:5000/api/dashboard", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        console.log("Fetched Dashboard:", JSON.stringify(res.data, null, 2));
-        setData(res.data);
-      } catch (err) {
-        console.error("Failed to load dashboard data:", err);
-      } finally {
-        setLoading(false);
-      }
-    };
+const Dashboard: React.FC<Props> = ({
+  dashboardData,
+  loading,
+  onRefresh,
+  error,
+}) => {
+  // Error state
+  if (error) {
+    return (
+      <div className="text-center mt-8">
+        <div className="text-red-500 mb-4">⚠️ {error}</div>
+        <button
+          onClick={onRefresh}
+          className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
+          Try Again
+        </button>
+      </div>
+    );
+  }
 
-    fetchData();
-  }, []);
+  // loading state
+  if (loading) {
+    return (
+      <div className="text-center mt-8">
+        <p>Loading dashboard...</p>
+      </div>
+    );
+  }
 
-  if (loading) return <p>Loading...</p>;
-  if (!data) return <p>No data found.</p>;
+  // no data state
+  if (!dashboardData) {
+    return (
+      <div className="text-center mt-8">
+        <p className="text-gray-500 mb-4">No dashboard data available.</p>
+        <button
+          onClick={onRefresh}
+          className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
+          Refresh
+        </button>
+      </div>
+    );
+  }
 
   return (
-    <div>
-      <UserDetails userData={data} />
-      <hr />
-     <NutritionDetails
-  nutrients={{
-    protein: data.prediction.protein,
-    carbs: data.prediction.carbs,
-    fats: data.prediction.fats,
-    sugar: data.prediction.sugar,
-    sodium: data.prediction.sodium,
-    fiber: data.prediction.fiber,
-    calories: data.prediction.calories,
-  }}
-/>
-
-
-      <hr />
-      {/* <Instructions recommendedRecipe={data.prediction.recommendedDiet} /> */}
+    <div className="max-w-4xl mx-auto p-4">
+      {/* user details */}
+      <div className="mb-6">
+        <UserDetails userData={dashboardData} />
+      </div>
     </div>
   );
 };

@@ -33,9 +33,9 @@ interface Props {
     carbs: number;
     fats: number;
     sugar: number;
-    sodium: number;
+    // sodium: number;
     fiber: number;
-    calories: number;
+    // calories: number;
   };
 }
 
@@ -125,6 +125,7 @@ const NutritionDetails: React.FC<Props> = ({ nutrients }) => {
                 const unit = unitsMap[props.payload.key] || "";
                 return [`${value}${unit}`, name];
               }}
+              cursor={{ fill: "rgba(0,0,0,0.05)", cursor: "pointer" }}
             />
             <Legend />
             <Bar dataKey="value">

@@ -1,8 +1,11 @@
-import express,{ type Express, type Request, type Response } from 'express';
+import express, { type Express, type Request, type Response } from 'express';
 import dotenv from 'dotenv';
 import cors from 'cors';
 import fetch from 'node-fetch';
+import multer from 'multer';
+import path from 'path';
 import { connectDB } from './config/db';
+import upload from "./middleware/uploadMiddleware";
 
 // Load environment variables
 dotenv.config();
@@ -14,7 +17,9 @@ const PORT = process.env.PORT || 5000;
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(express.static('public'));
+
+app.use("/uploads", express.static(path.join(__dirname, "public/uploads")));
+
 
 // Connect to DB
 connectDB();
@@ -24,14 +29,14 @@ import userRoutes from './routes/userRoutes';
 import userInputRoutes from './routes/userInputRoutes';
 import predictedDietRoutes from './routes/predictedDietRoutes';
 import dashboardRoute from './routes/dashboardRoute';
-// import geminiRoute from './routes/geminiRoute'; 
+import geminiRoute from './routes/geminiRoute';
 
 // Register routes
 app.use("/api/user", userRoutes);
 app.use("/api/user", userInputRoutes);
 app.use("/api", predictedDietRoutes);
 app.use("/api", dashboardRoute);
-// app.use("/api", geminiRoute); 
+app.use("/api", geminiRoute);
 
 // FastAPI bridge route
 app.post("/api/fetch", async (req: Request, res: Response) => {

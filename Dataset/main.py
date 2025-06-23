@@ -3,15 +3,16 @@ from pydantic import BaseModel
 from typing import List
 import pandas as pd
 
-from recommend import suggest_diet, cluster_recipes, clean_image_field
+from recommend import suggest_diet
+
 
 # Load recipe data
 recipe = pd.read_csv("cleaned_recipes.csv")
 
 # Clean and cluster recipes
-recipe['Images'] = recipe['Images'].apply(clean_image_field)
+
 nutrient_cols = ['Calories', 'FatContent', 'CarbohydrateContent', 'ProteinContent', 'FiberContent']
-recipe, _ = cluster_recipes(recipe, nutrient_cols, n_clusters=5)
+
 
 app = FastAPI()
 
@@ -24,7 +25,7 @@ class UserInput(BaseModel):
     Type: str
     meal_type: str
     health_conditions: List[str]
-    meal_frequency: int
+   
     activity_type: str
 
 @app.post("/recommend")

@@ -66,43 +66,48 @@ export const getAllInputDetailsOfUser = async (
       goal: goal.toLowerCase(),
       Type: preferences.toLowerCase(), // 'vegetarian' or 'non-vegetarian'
       meal_type: mealPlan.toLowerCase(),
-      health_conditions: healthIssues.split(",").map(c => c.trim().toLowerCase()),
+      health_conditions: healthIssues
+        .split(",")
+        .map((c) => c.trim().toLowerCase()),
       meal_frequency: mealFrequency,
       activity_type: activityType.toLowerCase(),
     };
 
     // 3. Send POST to Python model (FastAPI)
-    const pythonResponse = await axios.post("http://localhost:8000/recommend", fastApiPayload);
+    const pythonResponse = await axios.post(
+      "http://localhost:8000/recommend",
+      fastApiPayload
+    );
     const { bmr, tdee, bmi, calorie_target, diet_plan } = pythonResponse.data;
 
     // 4. Save predicted diet to PredictedDetails
     if (diet_plan.length > 0) {
-      await Promise.all(
-        diet_plan.map(async (item: any) => {
-          await prisma.predictedDetails.create({
-            data: {
-              bmr,
-              tdee,
-              bmi,
-              calorie_target,
-              Name: item.Name,
-              calories: item["Calories (kcal)"],
-              protein: item["Protein (g)"],
-              carbs: item["Carbs (g)"],
-              fats: item["Fat (g)"],
-              sodium: item["Sodium (mg)"],
-              fiber: item["Fiber (g)"],
-              sugar: item["Sugar (g)"],
-              Instructions: item.Instructions,
-              image: item.Image,
-              user: { connect: { id: userId } },
-            },
-          });
-        })
-      );
+      await prisma.predictedDetails.create({
+        data: {
+          bmr,
+          tdee,
+          bmi,
+          calorie_target,
+          user: { connect: { id: userId } },
+          meals: diet_plan.map((item: any) => ({
+            Name: item.Name,
+            calories: item["Calories (kcal)"],
+            protein: item["Protein (g)"],
+            carbs: item["Carbs (g)"],
+            fats: item["Fat (g)"],
+            sodium: item["Sodium (mg)"],
+            fiber: item["Fiber (g)"],
+            sugar: item["Sugar (g)"],
+            Instructions: item.Instructions,
+            image: item.Image,
+            mealType: item.mealType,
+          })),
+        },
+      });
     }
 
     res.status(200).json({
+      userId,
       message: "Input and prediction saved",
       inputDetails,
       dietPlan: diet_plan,
