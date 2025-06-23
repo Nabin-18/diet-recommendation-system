@@ -30,7 +30,7 @@ const MainPage = () => {
       description: "Personalized nutrition",
     },
     {
-      to: "dashboard",
+      to: "profile",
       label: "Profile",
       icon: <User className="w-5 h-5" />,
       gradient: "from-blue-500 to-indigo-600",
@@ -104,7 +104,7 @@ const MainPage = () => {
               </div>
               <div>
                 <h1 className="text-xl font-bold text-slate-800">
-                  Health Dashboard
+                  Diet Dashboard
                 </h1>
                 <p className="text-sm text-slate-600">Manage your wellness</p>
               </div>

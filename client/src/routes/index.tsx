@@ -103,7 +103,7 @@ const AppRoutes = () => {
           }
         />
         <Route
-          path="dashboard"
+          path="profile"
           element={
             <Dashboard 
               dashboardData={data} 

@@ -1,8 +1,6 @@
 import React from "react";
 import UserDetails from "./Dashboard/UserDetails";
-import NutritionDetails from "./Dashboard/NutritionDetails";
 import type { DashboardData } from "@/types";
-// import Instructions from "./Dashboard/Instructions";
 
 
 interface DashboardData {
@@ -44,25 +42,27 @@ interface Props {
 
 }
 
-const Dashboard: React.FC<Props> = ({ dashboardData, loading, onRefresh, error }) => {
+const Dashboard: React.FC<Props> = ({
+  dashboardData,
+  loading,
+  onRefresh,
+  error,
+}) => {
   // Error state
   if (error) {
     return (
       <div className="text-center mt-8">
-        <div className="text-red-500 mb-4">
-          ⚠️ {error}
-        </div>
-        <button 
+        <div className="text-red-500 mb-4">⚠️ {error}</div>
+        <button
           onClick={onRefresh}
-          className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
-        >
+          className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
           Try Again
         </button>
       </div>
     );
   }
 
-  // Loading state
+  // loading state
   if (loading) {
     return (
       <div className="text-center mt-8">
@@ -71,15 +71,14 @@ const Dashboard: React.FC<Props> = ({ dashboardData, loading, onRefresh, error }
     );
   }
 
-  // No data state
+  // no data state
   if (!dashboardData) {
     return (
       <div className="text-center mt-8">
         <p className="text-gray-500 mb-4">No dashboard data available.</p>
-        <button 
+        <button
           onClick={onRefresh}
-          className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
-        >
+          className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
           Refresh
         </button>
       </div>
@@ -87,58 +86,11 @@ const Dashboard: React.FC<Props> = ({ dashboardData, loading, onRefresh, error }
   }
 
   return (
-    <div>
-      <UserDetails userData={data} />
-      <hr />
-     <NutritionDetails
-  nutrients={{
-    protein: data.prediction.protein,
-    carbs: data.prediction.carbs,
-    fats: data.prediction.fats,
-    sugar: data.prediction.sugar,
-    // sodium: data.prediction.sodium,
-    fiber: data.prediction.fiber,
-    // calories: data.prediction.calories,
-  }}
-/>
-
-      {/* User Details */}
+    <div className="max-w-4xl mx-auto p-4">
+      {/* user details */}
       <div className="mb-6">
         <UserDetails userData={dashboardData} />
       </div>
-
-      <hr className="my-6" />
-
-      {/* Nutrition Section */}
-      {!dashboardData.inputDetails || !dashboardData.prediction ? (
-        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6 text-center">
-          <div className="text-yellow-700 font-medium mb-2">
-            ⚠️ Complete Your Profile
-          </div>
-          <p className="text-yellow-600">
-            Please enter your details to receive your personalized nutrition recommendations.
-          </p>
-        </div>
-      ) : (
-        <div>
-          <h2 className="text-xl font-semibold text-gray-800 mb-4">
-            Your Nutrition Recommendations
-          </h2>
-          <NutritionDetails
-            nutrients={{
-              protein: dashboardData.prediction.protein,
-              carbs: dashboardData.prediction.carbs,
-              fats: dashboardData.prediction.fats,
-              sugar: dashboardData.prediction.sugar,
-              sodium: dashboardData.prediction.sodium,
-              fiber: dashboardData.prediction.fiber,
-              calories: dashboardData.prediction.calories,
-            }}
-          />
-          {/* <hr className="my-6" />
-          <Instructions recommendedRecipe={dashboardData.prediction.recommendedDiet} /> */}
-        </div>
-      )}
     </div>
   );
 };

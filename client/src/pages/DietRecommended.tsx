@@ -292,50 +292,29 @@ const DietRecommended: React.FC<Props> = ({
       const userId = response.data.userId;
 
       // Fetch diet recommendations
-      const recommendationsResponse = await axios.get(
-        `http://localhost:5000/api/prediction/${userId}?mealFrequency=${data.mealFrequency}`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
+      const latestRes = await axios.get(
+        "http://localhost:5000/api/latest-prediction",
+        { headers: { Authorization: `Bearer ${token}` } }
       );
-      console.log("Recommendations response:", recommendationsResponse.data);
+      const { latestPrediction, latestUserInput } = latestRes.data;
 
-      if (!recommendationsResponse.data) {
-        throw new Error("No recommendations data received from server");
-      }
-
-      if (!recommendationsResponse.data.predictions) {
-        console.error(
-          "Server response missing predictions:",
-          recommendationsResponse.data
-        );
-        throw new Error("No recommendations available - please try again");
-      }
-
-      // setRecommendations([recommendationsResponse.data.predictions]);
-
-      // Prepare data for DietPlan component
-
-      const recommendationsArray = recommendationsResponse.data.predictions;
-
-      const allMeals = Array.isArray(recommendationsArray)
-        ? recommendationsArray
-        : [recommendationsArray];
-      // Only keep the latest meals according to mealFrequency
-      const mealFrequency = data.mealFrequency;
-      const latestMeals = allMeals.slice(-mealFrequency); // get last N meals
-
-      const dietPlanData: DietPlanData = {
-        userInput: data,
+      const dietPlanData = {
+        userInput: latestUserInput,
         recommendations: {
-          meals: latestMeals, // Only pass the latest meals
+          bmi: latestPrediction.bmi,
+          bmr: latestPrediction.bmr,
+          tdee: latestPrediction.tdee,
+          calorie_target: latestPrediction.calorie_target,
+          meals: Array.isArray(latestPrediction.meals)
+            ? latestPrediction.meals
+            : [],
         },
-        userId: userId,
         metadata: {
-          timestamp: new Date().toISOString(),
-          formSubmittedAt: new Date().toLocaleString(),
+          formSubmittedAt:
+            latestPrediction.predictionDate || new Date().toISOString(),
         },
       };
+
       console.log("DietPlanData according to freq:", dietPlanData);
 
       // Navigate to DietPlan component with data

@@ -5,8 +5,8 @@
 // Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
 
 generator client {
-  provider = "prisma-client-js"
-  output   = "../generated/prisma"
+  provider   = "prisma-client-js"
+  output     = "../generated/prisma"
   engineType = "binary"
 }
 
@@ -23,7 +23,7 @@ model User {
   email            String             @unique
   password         String
   image            String?
-  gender          String
+  gender           String
   dob              DateTime?
   resetOtp         String?
   resetOtpExpiry   DateTime?
@@ -34,7 +34,7 @@ model User {
 }
 
 model UserInputDetails {
-  id            Int      @id @default(autoincrement()) //primary key
+  id            Int    @id @default(autoincrement()) //primary key
   height        Int
   weight        Int
   age           Int
@@ -58,19 +58,20 @@ model PredictedDetails {
   tdee           Float?
   bmi            Float?
   calorie_target Float?
-  Name           String
-  calories       Float
-  protein        Float
-  carbs          Float
-  fats           Float
-  sodium         Float
-  fiber          Float
-  sugar          Float
-  Instructions   String
-  image          String
+  Name           String?
+  calories       Float?
+  protein        Float?
+  carbs          Float?
+  fats           Float?
+  sodium         Float?
+  fiber          Float?
+  sugar          Float?
+  Instructions   String?
+  image          String?
   predictionDate DateTime @default(now())
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
+  meals          Json
 
   //realtions
   userId Int
