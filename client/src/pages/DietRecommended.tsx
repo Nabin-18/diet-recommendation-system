@@ -17,6 +17,7 @@ import { useState, useEffect } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import type { DashboardData } from "@/types";
+// import { Label } from "recharts";
 
 // Form input schema (strings from form inputs)
 const dietFormInputSchema = z.object({
@@ -430,10 +431,13 @@ const DietRecommended: React.FC<Props> = ({
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
+                <label htmlFor="height" className="block text-sm font-semibold text-gray-800 mb-1">
+                  Height (cm)
+                </label>
                 <Input
                   {...register("height")}
                   placeholder="Height (cm) e.g. 170"
-                  className="rounded-[8px] focus-visible:ring-0 shadow-none"
+                  className="rounded-[8px] focus-visible:ring-0 shadow-none placeholder:text-gray-400"
                   disabled={isFormLoading}
                 />
                 {errors.height && (
@@ -443,11 +447,15 @@ const DietRecommended: React.FC<Props> = ({
                 )}
               </div>
 
+                  
               <div>
+                <label htmlFor="weight" className="block text-sm font-bold text-gray-800 mb-1">
+                  Weight (kg)
+                </label>
                 <Input
                   {...register("weight")}
                   placeholder="Weight (kg) e.g. 65"
-                  className="rounded-[8px] focus-visible:ring-0 shadow-none"
+                  className="rounded-[8px] focus-visible:ring-0 shadow-none placeholder:text-gray-400"
                   disabled={isFormLoading}
                 />
                 {errors.weight && (
@@ -458,10 +466,13 @@ const DietRecommended: React.FC<Props> = ({
               </div>
 
               <div>
+                <label htmlFor="age" className="block text-sm font-semibold text-gray-800 mb-1">
+                  Age (years)
+                </label>
                 <Input
                   {...register("age")}
                   placeholder="Age (years) e.g. 25"
-                  className="rounded-[8px] focus-visible:ring-0 shadow-none"
+                  className="rounded-[8px] focus-visible:ring-0 shadow-none placeholder:text-gray-400"
                   disabled={isFormLoading}
                 />
                 {errors.age && (
@@ -472,6 +483,9 @@ const DietRecommended: React.FC<Props> = ({
               </div>
 
               <div>
+                <label htmlFor="gender" className="block text-sm font-semibold text-gray-800 mb-1">
+                  Gender
+                </label>
                 <Controller
                   control={control}
                   name="gender"
@@ -505,6 +519,9 @@ const DietRecommended: React.FC<Props> = ({
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               <div>
+                <label htmlFor="goal" className="block text-sm font-semibold text-gray-800 mb-1">
+                  Fitness Goal
+                </label>
                 <Controller
                   control={control}
                   name="goal"
@@ -534,6 +551,9 @@ const DietRecommended: React.FC<Props> = ({
               </div>
 
               <div>
+                <label htmlFor="activityType" className="block text-sm font-semibold text-gray-800 mb-1">
+                  Primary Activity
+                </label>
                 <Controller
                   control={control}
                   name="activityType"
@@ -565,6 +585,10 @@ const DietRecommended: React.FC<Props> = ({
               </div>
 
               <div>
+                <label htmlFor="preferences" className="block text-sm font-semibold text-gray-800 mb-1">
+                  Diet Preference
+                </label>
+
                 <Controller
                   control={control}
                   name="preferences"
@@ -593,6 +617,9 @@ const DietRecommended: React.FC<Props> = ({
               </div>
 
               <div>
+                <label htmlFor="healthIssues" className="block text-sm font-semibold text-gray-800 mb-1">
+                  Health Condition
+                </label>
                 <Controller
                   control={control}
                   name="healthIssues"
