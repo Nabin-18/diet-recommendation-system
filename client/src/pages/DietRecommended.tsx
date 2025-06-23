@@ -1,5 +1,4 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
@@ -8,18 +7,52 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { z } from "zod";
-
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
-// import RecommendedDiet from "./RecommendedDiet";
 import { useState, useEffect } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import type { DashboardData } from "@/types";
-// import { Label } from "recharts";
+import FormField from "@/components/FormField";
+import FormSelect from "@/components/FormSelect";
 
-// Form input schema (strings from form inputs)
+
+//options for form
+const GENDER_OPTIONS = [
+  { value: "male", label: "Male" },
+  { value: "female", label: "Female" },
+  { value: "others", label: "Others" },
+];
+const GOAL_OPTIONS = [
+  { value: "weight_gain", label: "Weight Gain" },
+  { value: "weight_loss", label: "Weight Loss" },
+  { value: "maintain", label: "Maintain Weight" },
+];
+const DIET_PREFERENCE_OPTIONS = [
+  { value: "vegetarian", label: "Vegetarian" },
+  { value: "non-vegetarian", label: "Non-Vegetarian" },
+];
+const HEALTH_ISSUES_OPTIONS = [
+  { value: "normal", label: "Normal/Healthy" },
+  { value: "diabetes", label: "Diabetes" },
+  { value: "hypertension", label: "Hypertension" },
+  { value: "asthama", label: "Asthma" },
+];
+const ACTIVITY_OPTIONS = [
+  { value: "walking", label: "Walking" },
+  { value: "cycling", label: "Cycling" },
+  { value: "hiit", label: "HIIT" },
+  { value: "yoga", label: "Yoga" },
+  { value: "dancing", label: "Dancing" },
+  { value: "basketball", label: "Basketball" },
+  { value: "swimming", label: "Swimming" },
+  { value: "tennis", label: "Tennis" },
+  { value: "running", label: "Running" },
+  { value: "weight training", label: "Weight Training" },
+];
+
+// form input schema (strings from form inputs)
 const dietFormInputSchema = z.object({
   height: z
     .string()
@@ -72,13 +105,13 @@ const dietFormInputSchema = z.object({
     .max(4, "Meal frequency must be between 1 and 4"),
 });
 
-// Processed schema with transformations for API
+// processed schematransformations for api
 const dietFormSchema = dietFormInputSchema.transform((data) => {
   const height = parseFloat(data.height);
   const weight = parseFloat(data.weight);
   const age = parseInt(data.age, 10);
 
-  // Validate ranges after transformation
+  // validate ranges after transformation
   if (height < 50 || height > 300) {
     throw new Error("Height must be between 50-300 cm");
   }
@@ -107,52 +140,6 @@ interface Props {
   onRefresh?: () => void;
 }
 
-interface Recommendation {
-  fats: number;
-  protein: number;
-  Instructions: string;
-  bmr: number;
-  tdee: number;
-  calorie_target: number;
-  bmi: number;
-  Name: string;
-  image: string;
-  calories: number;
-  fat: number;
-  sugar: number;
-  sodium: number;
-  fiber: number;
-  carbs: number;
-  instruction: string;
-}
-
-// Data structure to pass to DietPlan component
-export interface DietPlanData {
-  userInput: DietFormData;
-  recommendations: {
-    meals: Recommendation[];
-  };
-  userId: string;
-  metadata: {
-    timestamp: string;
-    formSubmittedAt: string;
-  };
-}
-
-// Activity options for better maintainability
-const ACTIVITY_OPTIONS = [
-  { value: "walking", label: "Walking" },
-  { value: "cycling", label: "Cycling" },
-  { value: "hiit", label: "HIIT" },
-  { value: "yoga", label: "Yoga" },
-  { value: "dancing", label: "Dancing" },
-  { value: "basketball", label: "Basketball" },
-  { value: "swimming", label: "Swimming" },
-  { value: "tennis", label: "Tennis" },
-  { value: "running", label: "Running" },
-  { value: "weight training", label: "Weight Training" },
-];
-
 const DietRecommended: React.FC<Props> = ({
   dashboardData,
   loading: externalLoading,
@@ -170,21 +157,19 @@ const DietRecommended: React.FC<Props> = ({
   } = useForm<DietFormInputData>({
     resolver: zodResolver(dietFormInputSchema),
     defaultValues: {
-      mealFrequency: 3, // Set default meal frequency
+      mealFrequency: 3,
     },
   });
 
-  // const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [hasSubmitted, setHasSubmitted] = useState(false);
 
-  // Prefill form fields from dashboardData when available
   useEffect(() => {
     if (dashboardData?.inputDetails) {
       const details = dashboardData.inputDetails;
 
-      // Only prefill if form hasn't been submitted yet
+      // only prefill if form hasn't been submitted yet
       if (!hasSubmitted) {
         setValue("height", details.height?.toString() || "");
         setValue("weight", details.weight?.toString() || "");
@@ -265,10 +250,8 @@ const DietRecommended: React.FC<Props> = ({
     }
 
     try {
-      // transform and validate the data
       const data = dietFormSchema.parse(inputData);
 
-      // send user input to backend
       const response = await axios.post(
         "http://localhost:5000/api/user/user-input",
         data,
@@ -277,21 +260,10 @@ const DietRecommended: React.FC<Props> = ({
         }
       );
 
-      // Better response validation
-      console.log("User input response:", response.data); // Debug logging
-
-      if (!response.data) {
-        throw new Error("No data received from server");
-      }
-
-      if (!response.data.userId) {
-        console.error("Server response missing userId:", response.data);
+      if (!response.data?.userId) {
         throw new Error("Server response incomplete - missing user ID");
       }
 
-      const userId = response.data.userId;
-
-      // Fetch diet recommendations
       const latestRes = await axios.get(
         "http://localhost:5000/api/latest-prediction",
         { headers: { Authorization: `Bearer ${token}` } }
@@ -315,54 +287,23 @@ const DietRecommended: React.FC<Props> = ({
         },
       };
 
-      console.log("DietPlanData according to freq:", dietPlanData);
-
-      // Navigate to DietPlan component with data
       navigate("/main-page/diet-plan", {
         state: { dietPlanData },
-        replace: false, // Allow back navigation
+        replace: false, // back navigation
       });
 
-      console.log("DietplanData Sending:", dietPlanData);
-
-      // Refresh dashboard data if callback provided
-      if (onRefresh) {
-        onRefresh();
-      }
+      // refresh dashboard data
+      if (onRefresh) onRefresh();
     } catch (err: any) {
-      console.error("Error getting recommendations:", err);
-
-      // Handle Zod validation errors
       if (err.name === "ZodError") {
         setError(err.errors?.[0]?.message || "Please check your input values");
-        setLoading(false);
-        return;
-      }
-
-      // Handle network/axios errors
-      if (err.response) {
-        // Server responded with error status
-        const status = err.response.status;
-        const serverMessage =
-          err.response.data?.message || err.response.data?.error;
-
-        if (status === 401) {
-          setError("Session expired. Please login again.");
-          localStorage.removeItem("token");
-        } else if (status === 429) {
-          setError("Too many requests. Please try again later.");
-        } else if (status === 404) {
-          setError("Service not found. Please contact support.");
-        } else if (status >= 500) {
-          setError("Server error. Please try again later.");
-        } else {
-          setError(serverMessage || `Request failed with status ${status}`);
-        }
-      } else if (err.request) {
-        // Network error - no response received
-        setError("Network error. Please check your connection and try again.");
+      } else if (axios.isAxiosError(err)) {
+        setError(
+          err.response?.data?.message ||
+            err.response?.data?.error ||
+            "Server/network error. Please try again."
+        );
       } else {
-        // Other errors (including our custom validation errors)
         setError(
           err.message || "An unexpected error occurred. Please try again."
         );
@@ -373,7 +314,6 @@ const DietRecommended: React.FC<Props> = ({
   };
   const handleReset = () => {
     reset();
-    // setRecommendations([]);
     setError(null);
     setHasSubmitted(false);
   };
@@ -382,7 +322,7 @@ const DietRecommended: React.FC<Props> = ({
 
   return (
     <>
-      {/* External error display */}
+      {/* external error display */}
       {externalError && (
         <div className="m-auto mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
           <p className="text-red-600 text-center">{externalError}</p>
@@ -414,93 +354,51 @@ const DietRecommended: React.FC<Props> = ({
             </h2>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label
-                  htmlFor="height"
-                  className="block text-sm font-semibold text-gray-800 mb-1">
-                  Height (cm)
-                </label>
-                <Input
-                  {...register("height")}
-                  placeholder="Height (cm) e.g. 170"
-                  className="rounded-[8px] focus-visible:ring-0 shadow-none placeholder:text-gray-400"
-                  disabled={isFormLoading}
-                />
-                {errors.height && (
-                  <p className="text-red-500 text-sm mt-1">
-                    {errors.height.message}
-                  </p>
-                )}
-              </div>
+              <FormField
+                label="Height (cm)"
+                error={errors.height?.message}
+                inputProps={{
+                  ...register("height"),
+                  placeholder: "Height (cm) e.g. 170",
+                  disabled: isFormLoading,
+                }}
+              />
+              <FormField
+                label="Weight (kg)"
+                error={errors.weight?.message}
+                inputProps={{
+                  ...register("weight"),
+                  placeholder: "Weight (kg) e.g. 65",
+                  disabled: isFormLoading,
+                }}
+              />
+
+              <FormField
+                label="Age (years)"
+                error={errors.age?.message}
+                inputProps={{
+                  ...register("age"),
+                  placeholder: "Age (years) e.g. 25",
+                  disabled: isFormLoading,
+                }}
+              />
 
               <div>
-                <label
-                  htmlFor="weight"
-                  className="block text-sm font-bold text-gray-800 mb-1">
-                  Weight (kg)
-                </label>
-                <Input
-                  {...register("weight")}
-                  placeholder="Weight (kg) e.g. 65"
-                  className="rounded-[8px] focus-visible:ring-0 shadow-none placeholder:text-gray-400"
-                  disabled={isFormLoading}
-                />
-                {errors.weight && (
-                  <p className="text-red-500 text-sm mt-1">
-                    {errors.weight.message}
-                  </p>
-                )}
-              </div>
-
-              <div>
-                <label
-                  htmlFor="age"
-                  className="block text-sm font-semibold text-gray-800 mb-1">
-                  Age (years)
-                </label>
-                <Input
-                  {...register("age")}
-                  placeholder="Age (years) e.g. 25"
-                  className="rounded-[8px] focus-visible:ring-0 shadow-none placeholder:text-gray-400"
-                  disabled={isFormLoading}
-                />
-                {errors.age && (
-                  <p className="text-red-500 text-sm mt-1">
-                    {errors.age.message}
-                  </p>
-                )}
-              </div>
-
-              <div>
-                <label
-                  htmlFor="gender"
-                  className="block text-sm font-semibold text-gray-800 mb-1">
-                  Gender
-                </label>
                 <Controller
                   control={control}
                   name="gender"
                   render={({ field }) => (
-                    <Select
-                      onValueChange={field.onChange}
+                    <FormSelect
+                      label="Gender"
+                      error={errors.gender?.message}
                       value={field.value ?? ""}
-                      disabled={isFormLoading}>
-                      <SelectTrigger className="rounded-[8px] focus-visible:ring-0 shadow-none">
-                        <SelectValue placeholder="Select Gender" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="male">Male</SelectItem>
-                        <SelectItem value="female">Female</SelectItem>
-                        <SelectItem value="others">Others</SelectItem>
-                      </SelectContent>
-                    </Select>
+                      onChange={field.onChange}
+                      options={GENDER_OPTIONS}
+                      placeholder="Select Gender"
+                      disabled={isFormLoading}
+                    />
                   )}
                 />
-                {errors.gender && (
-                  <p className="text-red-500 text-sm mt-1">
-                    {errors.gender.message}
-                  </p>
-                )}
               </div>
             </div>
 
@@ -510,142 +408,75 @@ const DietRecommended: React.FC<Props> = ({
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               <div>
-                <label
-                  htmlFor="goal"
-                  className="block text-sm font-semibold text-gray-800 mb-1">
-                  Fitness Goal
-                </label>
                 <Controller
                   control={control}
                   name="goal"
                   render={({ field }) => (
-                    <Select
-                      onValueChange={field.onChange}
+                    <FormSelect
+                      label="Fitness Goal"
+                      error={errors.goal?.message}
                       value={field.value ?? ""}
-                      disabled={isFormLoading}>
-                      <SelectTrigger className="rounded-[8px]">
-                        <SelectValue placeholder="Fitness Goal" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="weight_gain">Weight Gain</SelectItem>
-                        <SelectItem value="weight_loss">Weight Loss</SelectItem>
-                        <SelectItem value="maintain">
-                          Maintain Weight
-                        </SelectItem>
-                      </SelectContent>
-                    </Select>
+                      onChange={field.onChange}
+                      options={GOAL_OPTIONS}
+                      placeholder="Fitness Goal"
+                      disabled={isFormLoading}
+                    />
                   )}
                 />
-                {errors.goal && (
-                  <p className="text-red-500 text-sm mt-1">
-                    {errors.goal.message}
-                  </p>
-                )}
               </div>
 
               <div>
-                <label
-                  htmlFor="activityType"
-                  className="block text-sm font-semibold text-gray-800 mb-1">
-                  Primary Activity
-                </label>
                 <Controller
                   control={control}
                   name="activityType"
                   render={({ field }) => (
-                    <Select
-                      onValueChange={field.onChange}
+                    <FormSelect
+                      label="Primary Activity"
+                      error={errors.activityType?.message}
                       value={field.value ?? ""}
-                      disabled={isFormLoading}>
-                      <SelectTrigger className="rounded-[8px]">
-                        <SelectValue placeholder="Primary Activity" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {ACTIVITY_OPTIONS.map((activity) => (
-                          <SelectItem
-                            key={activity.value}
-                            value={activity.value}>
-                            {activity.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                      onChange={field.onChange}
+                      options={ACTIVITY_OPTIONS}
+                      placeholder="Primary Activity"
+                      disabled={isFormLoading}
+                    />
                   )}
                 />
-                {errors.activityType && (
-                  <p className="text-red-500 text-sm mt-1">
-                    {errors.activityType.message}
-                  </p>
-                )}
               </div>
 
               <div>
-                <label
-                  htmlFor="preferences"
-                  className="block text-sm font-semibold text-gray-800 mb-1">
-                  Diet Preference
-                </label>
-
                 <Controller
                   control={control}
                   name="preferences"
                   render={({ field }) => (
-                    <Select
-                      onValueChange={field.onChange}
+                    <FormSelect
+                      label="Diet Preference"
+                      error={errors.preferences?.message}
                       value={field.value ?? ""}
-                      disabled={isFormLoading}>
-                      <SelectTrigger className="rounded-[8px]">
-                        <SelectValue placeholder="Diet Preference" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="vegetarian">Vegetarian</SelectItem>
-                        <SelectItem value="non-vegetarian">
-                          Non-Vegetarian
-                        </SelectItem>
-                      </SelectContent>
-                    </Select>
+                      onChange={field.onChange}
+                      options={DIET_PREFERENCE_OPTIONS}
+                      placeholder="Diet Preference"
+                      disabled={isFormLoading}
+                    />
                   )}
                 />
-                {errors.preferences && (
-                  <p className="text-red-500 text-sm mt-1">
-                    {errors.preferences.message}
-                  </p>
-                )}
               </div>
 
               <div>
-                <label
-                  htmlFor="healthIssues"
-                  className="block text-sm font-semibold text-gray-800 mb-1">
-                  Health Condition
-                </label>
                 <Controller
                   control={control}
                   name="healthIssues"
                   render={({ field }) => (
-                    <Select
-                      onValueChange={field.onChange}
+                    <FormSelect
+                      label="Health Condition"
+                      error={errors.healthIssues?.message}
                       value={field.value ?? ""}
-                      disabled={isFormLoading}>
-                      <SelectTrigger className="rounded-[8px]">
-                        <SelectValue placeholder="Health Condition" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="normal">Normal/Healthy</SelectItem>
-                        <SelectItem value="diabetes">Diabetes</SelectItem>
-                        <SelectItem value="hypertension">
-                          Hypertension
-                        </SelectItem>
-                        <SelectItem value="asthama">Asthma</SelectItem>
-                      </SelectContent>
-                    </Select>
+                      onChange={field.onChange}
+                      options={HEALTH_ISSUES_OPTIONS}
+                      placeholder="Health Condition"
+                      disabled={isFormLoading}
+                    />
                   )}
                 />
-                {errors.healthIssues && (
-                  <p className="text-red-500 text-sm mt-1">
-                    {errors.healthIssues.message}
-                  </p>
-                )}
               </div>
             </div>
 
@@ -741,69 +572,6 @@ const DietRecommended: React.FC<Props> = ({
           </div>
         </form>
       </div>
-
-      {/* Recommendations Section */}
-      {/* <div className="m-auto items-center shadow-2xl rounded-2xl flex flex-col gap-6 mt-6 p-8 bg-white">
-        <div className="text-center">
-          <h2 className="text-2xl font-bold text-gray-800 mb-2">
-            Your Personalized Diet Recommendations
-          </h2>
-          {recommendations.length > 0 && (
-            <p className="text-gray-600">
-              Based on your profile, here are your customized nutrition
-              recommendations
-            </p>
-          )}
-        </div>
-
-        <div className="w-full">
-          {recommendations.length > 0 ? (
-            <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-              {recommendations.map((item, index) => (
-                <RecommendedDiet
-                  key={index}
-                  Name={item.name}
-                  image={item.image}
-                  calories={item.calories}
-                  fats={item.fats}
-                  sugar={item.sugar}
-                  sodium={item.sodium}
-                  carbs={item.carbs}
-                  fiber={item.fiber}
-                  protein={item.protein}
-                  Instructions={item.Instructions}
-                  bmr={item.bmr}
-                  tdee={item.tdee}
-                  calorie_target={item.calorie_target}
-                  bmi={item.bmi}
-                />
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-12">
-              <div className="text-gray-400 mb-4">
-                <svg
-                  className="w-16 h-16 mx-auto"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24">
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={1.5}
-                    d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                  />
-                </svg>
-              </div>
-              <p className="text-gray-500 text-lg">
-                {hasSubmitted
-                  ? "Processing your recommendations..."
-                  : "Complete the form above to get your personalized diet recommendations"}
-              </p>
-            </div>
-          )}
-        </div>
-      </div> */}
 
       {isFormLoading && (
         <div className="m-auto mt-6 p-8 bg-white shadow-2xl rounded-2xl">
