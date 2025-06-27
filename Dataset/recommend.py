@@ -5,9 +5,8 @@ from sklearn.metrics.pairwise import cosine_similarity
 from sklearn.preprocessing import MinMaxScaler
 from scipy.optimize import minimize
 
-
-
-nutrient=pd.read_csv('nutrient_cleaned.csv')
+# Load nutrient data
+nutrient = pd.read_csv('nutrient_cleaned.csv')
 calorie_lookup = dict(zip(nutrient['food'].str.lower(), nutrient['calories']))
 
 # -------------------------------------------
@@ -37,292 +36,327 @@ def get_image_url(x):
         return x
     return "Image not found"
 
-def optimize_ingredient_weights(ingredients, target_macros, recipe_name=""):
+def validate_user_input(user_input):
+    """Validate user input parameters"""
+    required_fields = ['gender', 'age', 'height_cm', 'weight_kg', 'goal', 'Type', 'meal_type']
+    for field in required_fields:
+        if field not in user_input:
+            raise ValueError(f"Missing required field: {field}")
+    
+    if user_input['age'] <= 0 or user_input['age'] > 120:
+        raise ValueError("Age must be between 1-120")
+    if user_input['height_cm'] <= 0 or user_input['height_cm'] > 250:
+        raise ValueError("Height must be between 1-250 cm")
+    if user_input['weight_kg'] <= 0 or user_input['weight_kg'] > 500:
+        raise ValueError("Weight must be between 1-500 kg")
+
+# Enhanced portion guidelines
+portion_guidelines = {
+    'default': (50, 150),
+    
+    # Proteins - moderate to high portions
+    'chicken': (80, 150),
+    'beef': (80, 150),
+    'fish': (100, 150),
+    'salmon': (80, 120),
+    'tuna': (80, 120),
+    'shrimp': (60, 100),
+    'egg': (50, 100),
+    'tofu': (60, 120),
+    'tempeh': (60, 100),
+    'turkey': (80, 150),
+    'pork': (80, 120),
+    'lamb': (80, 120),
+    'duck': (80, 120),
+    'cod': (100, 150),
+    'tilapia': (100, 150),
+    'mackerel': (80, 120),
+    'sardines': (60, 100),
+    'crab': (60, 100),
+    'lobster': (60, 100),
+    'scallops': (60, 100),
+    'mussels': (80, 120),
+    'oysters': (60, 100),
+    'cottage cheese': (80, 150),
+    'greek yogurt': (80, 150),
+    'protein powder': (20, 40),
+    'seitan': (60, 100),
+    
+    # Legumes/Beans - moderate portions
+    'lentils': (40, 80),
+    'chickpeas': (40, 80),
+    'beans': (40, 80),
+    'kidney beans': (40, 80),
+    'black beans': (40, 80),
+    'navy beans': (40, 80),
+    'lima beans': (40, 80),
+    'pinto beans': (40, 80),
+    'garbanzo beans': (40, 80),
+    'edamame': (60, 100),
+    'split peas': (40, 80),
+    'black-eyed peas': (40, 80),
+    'fava beans': (40, 80),
+    
+    # Grains - based on dry weight
+    'rice': (40, 80),
+    'brown rice': (40, 80),
+    'quinoa': (30, 60),
+    'pasta': (50, 100),
+    'bread': (25, 50),
+    'oats': (30, 60),
+    'barley': (40, 80),
+    'bulgur': (30, 60),
+    'wheat': (40, 80),
+    'buckwheat': (30, 60),
+    'millet': (30, 60),
+    'amaranth': (30, 60),
+    'couscous': (40, 80),
+    'farro': (40, 80),
+    'wild rice': (40, 80),
+    'corn': (80, 120),
+    'polenta': (40, 80),
+    'tortilla': (25, 50),
+    'bagel': (60, 100),
+    'cereal': (25, 50),
+    'crackers': (15, 30),
+    'noodles': (50, 100),
+    
+    # Vegetables - larger portions allowed
+    'broccoli': (80, 150),
+    'spinach': (40, 100),
+    'kale': (40, 100),
+    'carrot': (60, 120),
+    'tomato': (80, 150),
+    'onion': (30, 80),
+    'potato': (120, 200),
+    'sweet potato': (120, 200),
+    'bell pepper': (50, 100),
+    'pepper': (50, 100),
+    'cucumber': (80, 150),
+    'zucchini': (80, 150),
+    'cauliflower': (80, 150),
+    'cabbage': (80, 150),
+    'lettuce': (40, 100),
+    'mushrooms': (80, 150),
+    'asparagus': (80, 150),
+    'green beans': (80, 150),
+    'peas': (60, 120),
+    'celery': (80, 150),
+    'radish': (40, 80),
+    'beets': (80, 120),
+    'turnip': (80, 120),
+    'parsnip': (80, 120),
+    'leek': (60, 120),
+    'artichoke': (80, 150),
+    'brussels sprouts': (80, 150),
+    'eggplant': (80, 150),
+    'okra': (80, 150),
+    'squash': (80, 150),
+    'pumpkin': (80, 150),
+    'garlic': (3, 10),
+    'ginger': (3, 10),
+    'herbs': (3, 15),
+    'avocado': (60, 120),
+    
+    # Fruits - moderate portions
+    'apple': (120, 200),
+    'banana': (100, 150),
+    'orange': (120, 200),
+    'berries': (60, 120),
+    'grapes': (80, 120),
+    'strawberries': (80, 150),
+    'blueberries': (60, 120),
+    'raspberries': (60, 120),
+    'blackberries': (60, 120),
+    'pear': (120, 200),
+    'peach': (120, 200),
+    'plum': (80, 150),
+    'apricot': (80, 150),
+    'kiwi': (80, 120),
+    'mango': (120, 200),
+    'pineapple': (120, 200),
+    'watermelon': (150, 250),
+    'cantaloupe': (150, 250),
+    'honeydew': (150, 250),
+    'cherries': (80, 120),
+    'grapefruit': (150, 250),
+    'lemon': (30, 80),
+    'lime': (20, 60),
+    'coconut': (25, 60),
+    'dates': (25, 50),
+    'figs': (40, 80),
+    'raisins': (25, 50),
+    'cranberries': (25, 50),
+    'pomegranate': (80, 120),
+    'papaya': (120, 200),
+    
+    # Fats/Oils - small portions
+    'oil': (3, 10),
+    'olive oil': (3, 10),
+    'coconut oil': (3, 10),
+    'butter': (3, 15),
+    'ghee': (3, 10),
+    'avocado oil': (3, 10),
+    'canola oil': (3, 10),
+    'sunflower oil': (3, 10),
+    'sesame oil': (3, 10),
+    'vegetable oil': (3, 10),
+    'margarine': (3, 15),
+    'lard': (3, 10),
+    'coconut butter': (8, 20),
+    
+    # Nuts/Seeds - small portions due to high calories
+    'almonds': (10, 25),
+    'peanuts': (10, 25),
+    'cashews': (10, 25),
+    'seeds': (8, 20),
+    'sesame seeds': (8, 15),
+    'walnuts': (10, 25),
+    'pecans': (10, 25),
+    'pistachios': (10, 25),
+    'hazelnuts': (10, 25),
+    'brazil nuts': (10, 25),
+    'macadamia nuts': (10, 25),
+    'pine nuts': (8, 20),
+    'sunflower seeds': (10, 25),
+    'pumpkin seeds': (10, 25),
+    'flax seeds': (8, 20),
+    'chia seeds': (8, 20),
+    'hemp seeds': (10, 25),
+    'poppy seeds': (8, 15),
+    'peanut butter': (10, 25),
+    'almond butter': (10, 25),
+    'tahini': (10, 25),
+    'nutella': (10, 25),
+    
+    # Dairy
+    'milk': (150, 250),
+    'yogurt': (80, 150),
+    'cheese': (15, 40),
+    'cream cheese': (10, 25),
+    'sour cream': (10, 25),
+    'heavy cream': (10, 25),
+    'mozzarella': (15, 40),
+    'cheddar': (15, 40),
+    'parmesan': (8, 25),
+    'feta': (15, 40),
+    'goat cheese': (15, 40),
+    'ricotta': (40, 80),
+    'cream': (25, 50),
+    'buttermilk': (150, 250),
+    'kefir': (150, 250),
+    'ice cream': (40, 100),
+    
+    # Condiments & Seasonings
+    'salt': (1, 3),
+    'pepper': (1, 2),
+    'vinegar': (3, 10),
+    'soy sauce': (3, 10),
+    'hot sauce': (2, 8),
+    'mustard': (3, 10),
+    'ketchup': (8, 15),
+    'mayonnaise': (8, 15),
+    'honey': (8, 20),
+    'maple syrup': (8, 20),
+    'sugar': (3, 10),
+    'brown sugar': (3, 10),
+    'vanilla': (1, 3),
+    'cinnamon': (1, 3),
+    'paprika': (1, 3),
+    'turmeric': (1, 3),
+    'cumin': (1, 3),
+    'oregano': (1, 3),
+    'basil': (2, 8),
+    'thyme': (1, 3),
+    'rosemary': (1, 3),
+    'parsley': (3, 10),
+    'cilantro': (3, 10),
+    'dill': (2, 8),
+    'mint': (2, 8),
+    'lemon juice': (3, 10),
+    'lime juice': (3, 10),
+    'balsamic vinegar': (3, 10),
+    'worcestershire sauce': (2, 8),
+    'fish sauce': (2, 8),
+    'coconut milk': (40, 80),
+    'tomato paste': (8, 20),
+    'tomato sauce': (40, 80),
+    'pesto': (8, 20),
+    'salsa': (25, 50),
+    'hummus': (25, 50),
+    'guacamole': (25, 50),
+}
+
+def get_realistic_portions(ing_name, target_calories=400):
     """
-    🎯 KEY FUNCTION: Optimizes ingredient quantities to match target calories/macros
-    Uses realistic portion sizes and cooking ratios
+    Get realistic portion sizes with calorie-based scaling
+    """
+    ing_lower = ing_name.lower()
+    base_min, base_max = portion_guidelines.get('default', (50, 150))
+    
+    # Find specific ingredient guidelines
+    for key, (min_g, max_g) in portion_guidelines.items():
+        if key in ing_lower or ing_lower in key:
+            base_min, base_max = min_g, max_g
+            break
+    
+    # Scale portions based on target meal size
+    if target_calories < 300:  # Small meal
+        scale_factor = 0.8
+    elif target_calories > 600:  # Large meal
+        scale_factor = 1.2
+    else:  # Normal meal
+        scale_factor = 1.0
+    
+    return (int(base_min * scale_factor), int(base_max * scale_factor))
+
+def extract_ingredients(row):
+    """
+    Extract ingredients from recipe that exist in nutrient database
+    """
+    instr = row.get('RecipeInstructions', '')
+    ingredient_text = row.get('RecipeIngredientParts', '')
+    
+    # Combine instruction and ingredient text
+    combined_text = ' '.join(instr if isinstance(instr, list) else [str(instr)]) + ' ' + str(ingredient_text)
+    
+    # Find ingredients that exist in our nutrient database
+    found_ings = []
+    for ingredient in nutrient['food'].str.lower():
+        if re.search(rf'\b{re.escape(ingredient)}\b', combined_text.lower()):
+            found_ings.append(ingredient)
+    
+    return list(set(found_ings))
+
+def calculate_actual_nutrition(optimized_quantities):
+    """
+    Calculate actual nutrition from optimized ingredient quantities
+    """
+    total_nutrition = {'calories': 0, 'protein': 0, 'fat': 0, 'carbs': 0, 'fiber': 0}
+    
+    for ing, qty_str in optimized_quantities.items():
+        # Extract grams from string like "150g broccoli"
+        grams_match = re.search(r'(\d+)g', qty_str)
+        if grams_match:
+            grams = int(grams_match.group(1))
+            ing_data = nutrient[nutrient['food'].str.lower() == ing.lower()]
+            if not ing_data.empty:
+                multiplier = grams / 100  # per 100g
+                total_nutrition['calories'] += ing_data['calories'].values[0] * multiplier
+                total_nutrition['protein'] += ing_data['protein'].values[0] * multiplier
+                total_nutrition['fat'] += ing_data['fat'].values[0] * multiplier
+                total_nutrition['carbs'] += ing_data['carbs'].values[0] * multiplier
+                total_nutrition['fiber'] += ing_data['fiber'].values[0] * multiplier
+    
+    return total_nutrition
+
+def optimize_ingredient_weights(ingredients, target_macros, recipe_name="", target_calories=400):
+    """
+    Optimizes ingredient quantities to match target calories/macros
+    Uses realistic portion sizes and cooking ratios with accuracy constraints (95-105%)
     """
     if len(ingredients) == 0:
         return {}
-
-    # Define realistic portion ranges for different ingredient types
-    portion_guidelines = {
-        
-    # Proteins - based on actual nutrient data ranges
-    'chicken': (100, 180),
-    'beef': (100, 180),
-    'fish': (120, 180),
-    'salmon': (100, 150),
-    'tuna': (100, 150),
-    'shrimp': (80, 120),
-    'egg': (50, 100),
-    'tofu': (80, 150),
-    'tempeh': (80, 120),
-    'turkey': (100, 180),
-    'pork': (100, 150),
-    'lamb': (100, 150),
-    'duck': (100, 150),
-    'cod': (120, 180),
-    'tilapia': (120, 180),
-    'mackerel': (100, 150),
-    'sardines': (80, 120),
-    'crab': (80, 120),
-    'lobster': (80, 120),
-    'scallops': (80, 120),
-    'mussels': (100, 150),
-    'oysters': (80, 120),
-    'cottage cheese': (100, 200),
-    'greek yogurt': (100, 200),
-    'protein powder': (25, 50),
-    'seitan': (80, 120),
-    
-    # Legumes/Beans - higher protein, moderate calories
-    'lentils': (60, 100),
-    'chickpeas': (60, 100),
-    'beans': (60, 100),
-    'kidney beans': (60, 100),
-    'black beans': (60, 100),
-    'navy beans': (60, 100),
-    'lima beans': (60, 100),
-    'pinto beans': (60, 100),
-    'garbanzo beans': (60, 100),
-    'edamame': (80, 120),
-    'split peas': (60, 100),
-    'black-eyed peas': (60, 100),
-    'fava beans': (60, 100),
-    
-    # Grains - based on dry weight from nutrient data
-    'rice': (50, 100),
-    'brown rice': (50, 100),
-    'quinoa': (40, 80),
-    'pasta': (60, 120),
-    'bread': (30, 60),
-    'oats': (40, 80),
-    'barley': (50, 100),
-    'bulgur': (40, 80),
-    'wheat': (50, 100),
-    'buckwheat': (40, 80),
-    'millet': (40, 80),
-    'amaranth': (40, 80),
-    'couscous': (50, 100),
-    'farro': (50, 100),
-    'wild rice': (50, 100),
-    'corn': (100, 150),
-    'polenta': (50, 100),
-    'tortilla': (30, 60),
-    'bagel': (80, 120),
-    'cereal': (30, 60),
-    'crackers': (20, 40),
-    'noodles': (60, 120),
-    
-    # Vegetables - low calorie, can have larger portions
-    'broccoli': (100, 200),
-    'spinach': (50, 150),
-    'kale': (50, 150),
-    'carrot': (80, 150),
-    'tomato': (100, 200),
-    'onion': (50, 100),
-    'potato': (150, 250),
-    'sweet potato': (150, 250),
-    'bell pepper': (100, 200),
-    'cucumber': (100, 200),
-    'zucchini': (100, 200),
-    'cauliflower': (100, 200),
-    'cabbage': (100, 200),
-    'lettuce': (50, 150),
-    'mushrooms': (100, 200),
-    'asparagus': (100, 200),
-    'green beans': (100, 200),
-    'peas': (80, 150),
-    'celery': (100, 200),
-    'radish': (50, 100),
-    'beets': (100, 150),
-    'turnip': (100, 150),
-    'parsnip': (100, 150),
-    'leek': (80, 150),
-    'artichoke': (100, 200),
-    'brussels sprouts': (100, 200),
-    'eggplant': (100, 200),
-    'okra': (100, 200),
-    'squash': (100, 200),
-    'pumpkin': (100, 200),
-    'garlic': (5, 15),
-    'ginger': (5, 15),
-    'herbs': (5, 20),
-    'avocado': (80, 150),
-    
-    # Fruits - moderate calories
-    'apple': (150, 250),
-    'banana': (120, 200),
-    'orange': (150, 250),
-    'berries': (80, 150),
-    'grapes': (100, 150),
-    'strawberries': (100, 200),
-    'blueberries': (80, 150),
-    'raspberries': (80, 150),
-    'blackberries': (80, 150),
-    'pear': (150, 250),
-    'peach': (150, 250),
-    'plum': (100, 200),
-    'apricot': (100, 200),
-    'kiwi': (100, 150),
-    'mango': (150, 250),
-    'pineapple': (150, 250),
-    'watermelon': (200, 300),
-    'cantaloupe': (200, 300),
-    'honeydew': (200, 300),
-    'cherries': (100, 150),
-    'grapefruit': (200, 300),
-    'lemon': (50, 100),
-    'lime': (30, 80),
-    'coconut': (30, 80),
-    'dates': (30, 60),
-    'figs': (50, 100),
-    'raisins': (30, 60),
-    'cranberries': (30, 60),
-    'pomegranate': (100, 150),
-    'papaya': (150, 250),
-    
-    # Fats/Oils - very high calorie density
-    'oil': (5, 15),
-    'olive oil': (5, 15),
-    'coconut oil': (5, 15),
-    'butter': (5, 20),
-    'ghee': (5, 15),
-    'avocado oil': (5, 15),
-    'canola oil': (5, 15),
-    'sunflower oil': (5, 15),
-    'sesame oil': (5, 15),
-    'vegetable oil': (5, 15),
-    'margarine': (5, 20),
-    'lard': (5, 15),
-    'coconut butter': (10, 25),
-    
-    # Nuts/Seeds - high calorie density
-    'almonds': (15, 30),
-    'peanuts': (15, 30),
-    'cashews': (15, 30),
-    'seeds': (10, 25),
-    'sesame seeds': (10, 20),
-    'walnuts': (15, 30),
-    'pecans': (15, 30),
-    'pistachios': (15, 30),
-    'hazelnuts': (15, 30),
-    'brazil nuts': (15, 30),
-    'macadamia nuts': (15, 30),
-    'pine nuts': (10, 25),
-    'sunflower seeds': (15, 30),
-    'pumpkin seeds': (15, 30),
-    'flax seeds': (10, 25),
-    'chia seeds': (10, 25),
-    'hemp seeds': (15, 30),
-    'poppy seeds': (10, 20),
-    'peanut butter': (15, 30),
-    'almond butter': (15, 30),
-    'tahini': (15, 30),
-    'nutella': (15, 30),
-    
-    # Dairy
-    'milk': (200, 300),
-    'yogurt': (100, 200),
-    'cheese': (20, 50),
-    'cream cheese': (15, 30),
-    'sour cream': (15, 30),
-    'heavy cream': (15, 30),
-    'mozzarella': (20, 50),
-    'cheddar': (20, 50),
-    'parmesan': (10, 30),
-    'feta': (20, 50),
-    'goat cheese': (20, 50),
-    'ricotta': (50, 100),
-    'cream': (30, 60),
-    'buttermilk': (200, 300),
-    'kefir': (200, 300),
-    'ice cream': (50, 120),
-    
-    # Beverages
-    'water': (200, 500),
-    'tea': (200, 400),
-    'coffee': (200, 400),
-    'juice': (150, 250),
-    'soda': (150, 300),
-    'coconut water': (200, 400),
-    'almond milk': (200, 300),
-    'soy milk': (200, 300),
-    'oat milk': (200, 300),
-    'rice milk': (200, 300),
-    'wine': (100, 150),
-    'beer': (300, 500),
-    'spirits': (30, 60),
-    
-    # Condiments & Seasonings
-    'salt': (1, 5),
-    'pepper': (1, 3),
-    'vinegar': (5, 15),
-    'soy sauce': (5, 15),
-    'hot sauce': (2, 10),
-    'mustard': (5, 15),
-    'ketchup': (10, 20),
-    'mayonnaise': (10, 20),
-    'honey': (10, 25),
-    'maple syrup': (10, 25),
-    'sugar': (5, 15),
-    'brown sugar': (5, 15),
-    'vanilla': (2, 5),
-    'cinnamon': (1, 5),
-    'paprika': (1, 5),
-    'turmeric': (1, 5),
-    'cumin': (1, 5),
-    'oregano': (1, 5),
-    'basil': (2, 10),
-    'thyme': (1, 5),
-    'rosemary': (1, 5),
-    'parsley': (5, 15),
-    'cilantro': (5, 15),
-    'dill': (2, 10),
-    'mint': (2, 10),
-    'lemon juice': (5, 15),
-    'lime juice': (5, 15),
-    'balsamic vinegar': (5, 15),
-    'worcestershire sauce': (2, 10),
-    'fish sauce': (2, 10),
-    'coconut milk': (50, 100),
-    'tomato paste': (10, 25),
-    'tomato sauce': (50, 100),
-    'pesto': (10, 25),
-    'salsa': (30, 60),
-    'hummus': (30, 60),
-    'guacamole': (30, 60),
-    
-    # Snacks & Processed Foods
-    'chips': (20, 50),
-    'pretzels': (20, 50),
-    'popcorn': (20, 50),
-    'chocolate': (20, 50),
-    'cookies': (20, 50),
-    'cake': (50, 100),
-    'pie': (80, 150),
-    'candy': (20, 50),
-    'granola': (30, 60),
-    'energy bar': (30, 60),
-    'protein bar': (40, 80),
-    'trail mix': (30, 60),
-    'jerky': (20, 40),
-    'pizza': (100, 200),
-    'sandwich': (150, 300),
-    'burrito': (200, 400),
-    'taco': (80, 150),
-    'soup': (200, 400),
-    'salad': (100, 300),
-}
-    
-    
-    def get_realistic_portions(ing_name):
-        ing_lower = ing_name.lower()
-        for key, (min_g, max_g) in portion_guidelines.items():
-            if key in ing_lower or ing_lower in key:
-                return min_g, max_g
-        return portion_guidelines['default']
 
     # Build nutrition matrix with realistic constraints
     valid_ingredients = []
@@ -333,7 +367,7 @@ def optimize_ingredient_weights(ingredients, target_macros, recipe_name=""):
         row = nutrient[nutrient['food'].str.lower() == ing.lower()]
         if not row.empty:
             valid_ingredients.append(ing)
-            min_g, max_g = get_realistic_portions(ing)
+            min_g, max_g = get_realistic_portions(ing, target_calories)
             bounds.append((min_g/100, max_g/100))  # Convert to 100g units
             base_portions.append((min_g + max_g) / 200)  # Average as starting point
 
@@ -360,43 +394,61 @@ def optimize_ingredient_weights(ingredients, target_macros, recipe_name=""):
         predicted = nutrition_matrix.T @ portions
         
         # Weighted error (calories most important, then protein)
-        weights = np.array([2.0, 1.5, 1.0, 1.0, 0.5])  # calories, protein, fat, carbs, fiber
+        weights = np.array([3.0, 2.0, 1.0, 1.0, 0.5])  # calories, protein, fat, carbs, fiber
         errors = np.abs(predicted - target) / (target + 1e-6)  # Relative error
         
         # Penalty for unrealistic total portion size
         total_weight = sum(portions) * 100  # Convert back to grams
-        if total_weight > 800:  # Penalty if meal > 800g
-            size_penalty = (total_weight - 800) / 100
+        if total_weight > 600:  # Penalty if meal > 600g
+            size_penalty = (total_weight - 600) / 100
+        elif total_weight < 150:  # Penalty if meal < 150g
+            size_penalty = (150 - total_weight) / 100
         else:
-            size_penalty = 0
+          size_penalty = 0
             
         return np.sum(weights * errors**2) + size_penalty
 
     try:
+        # Define constraints for calorie accuracy (95-105%)
+        def calorie_constraint(portions):
+            total_cals = nutrition_matrix[:, 0] @ portions
+            return total_cals
+        
+        # Bounds for calories (95-105% of target)
+        calorie_lower = 0.95 * target_macros[0]
+        calorie_upper = 1.05 * target_macros[0]
+        
+        constraints = [
+            {'type': 'ineq', 'fun': lambda x: calorie_constraint(x) - calorie_lower},
+            {'type': 'ineq', 'fun': lambda x: calorie_upper - calorie_constraint(x)}
+        ]
+        
         # Use realistic starting portions
         initial_portions = np.array(base_portions)
         
-        # Optimize with realistic bounds
+        # Optimize with realistic bounds and calorie constraints
         result = minimize(
             objective_function, 
             initial_portions, 
             bounds=bounds, 
             method='SLSQP',
+            constraints=constraints,
             options={'maxiter': 1000}
         )
         
         if result.success:
             optimized_portions = result.x
         else:
-            # Fallback to proportional scaling
-            target_calories = target_macros[0]
+            # Fallback with proportional scaling within bounds
             total_base_calories = sum(
                 nutrition_matrix[i][0] * base_portions[i] 
                 for i in range(len(valid_ingredients))
             )
+            
             if total_base_calories > 0:
-                scale_factor = min(2.0, target_calories / total_base_calories)
-                optimized_portions = [p * scale_factor for p in base_portions]
+                # Scale to hit target calories within bounds
+                target_scale = min(1.05, max(0.95, target_macros[0] / total_base_calories))
+                optimized_portions = [p * target_scale for p in base_portions]
             else:
                 optimized_portions = base_portions
         
@@ -406,13 +458,11 @@ def optimize_ingredient_weights(ingredients, target_macros, recipe_name=""):
         
         for i, ing in enumerate(valid_ingredients):
             grams = round(optimized_portions[i] * 100)
-            if grams >= 5:  # Only include meaningful amounts
+            if grams >= 3:  # Only include meaningful amounts
                 quantities[ing] = f"{grams}g {ing}"
                 # Calculate calories for this ingredient
                 ing_cals = nutrition_matrix[i][0] * optimized_portions[i]
                 total_cals += ing_cals
-        
-      
         
         return quantities
         
@@ -420,15 +470,15 @@ def optimize_ingredient_weights(ingredients, target_macros, recipe_name=""):
         print(f"❌ Optimization failed for {recipe_name}: {e}")
         # Simple fallback: reasonable portions
         fallback_quantities = {}
-        for ing in valid_ingredients[:3]:  # Limit to 3 main ingredients
-            min_g, max_g = get_realistic_portions(ing)
+        for ing in valid_ingredients[:4]:  # Limit to 4 main ingredients
+            min_g, max_g = get_realistic_portions(ing, target_calories)
             avg_g = (min_g + max_g) // 2
             fallback_quantities[ing] = f"{avg_g}g {ing}"
         return fallback_quantities
 
 def inject_quantities_into_instructions(instructions, quantities):
     """
-    🔄 Injects calculated quantities into recipe instructions
+    Injects calculated quantities into recipe instructions
     """
     if isinstance(instructions, str):
         instructions = [instructions]
@@ -454,12 +504,15 @@ def inject_quantities_into_instructions(instructions, quantities):
     return '\n'.join(f"{i+1}. {line}" for i, line in enumerate(updated_steps))
 
 # -------------------------------------------
-# Main Function
+# Main Function with Accuracy Constraints
 # -------------------------------------------
-def suggest_diet(user_input: dict, recipe_df: pd.DataFrame, max_meals: int = 6, tolerance: float = 0.05):
+def suggest_diet(user_input: dict, recipe_df: pd.DataFrame, max_meals: int = 5, tolerance: float = 0.05):
     """
-    🍽️ Main function that suggests optimized diet plan
+    Main function that suggests optimized diet plan with accuracy constraints (95-105%)
     """
+    # Validate input
+    validate_user_input(user_input)
+    
     nutrient_cols = ['Calories', 'FatContent', 'CarbohydrateContent', 'ProteinContent', 'FiberContent']
     df = recipe_df.copy()
 
@@ -511,7 +564,7 @@ def suggest_diet(user_input: dict, recipe_df: pd.DataFrame, max_meals: int = 6, 
         cal_target * 0.25 / 9,  # fat
         cal_target * 0.5 / 4,   # carbs
         cal_target * 0.25 / 4,  # protein
-        10                     # fiber
+        cal_target * 0.035      # fiber
     ]
 
     scaler = MinMaxScaler()
@@ -521,90 +574,81 @@ def suggest_diet(user_input: dict, recipe_df: pd.DataFrame, max_meals: int = 6, 
 
     # ---------------- Meal Selection & Optimization ----------------
     diet, kcal_sum = [], 0
-    for _, row in df.sort_values('similarity', ascending=False).iterrows():
-        if len(diet) >= max_meals or kcal_sum >= cal_target * (1 - tolerance):
+    
+    for meal_index, (_, row) in enumerate(df.sort_values('similarity', ascending=False).iterrows()):
+        if len(diet) >= max_meals:
             break
-
-        # Extract ingredients from recipe
-        instr = row.get('RecipeInstructions', '')
-        ingredient_text = row.get('RecipeIngredientParts', '')
+            
+        # Calculate target calories for THIS meal with accuracy bounds
+        meals_remaining = max_meals - meal_index
+        calories_remaining = max(0, cal_target - kcal_sum)
         
-        # Combine instruction and ingredient text for ingredient extraction
-        combined_text = ' '.join(instr if isinstance(instr, list) else [str(instr)]) + ' ' + str(ingredient_text)
+        # Stop if we've hit our target (with tolerance)
+        if calories_remaining <= cal_target * tolerance:
+            break
+            
+        # Target calories for this specific meal (with 95-105% bounds)
+        if meals_remaining > 0:
+            target_calories_this_meal = min(
+                max(200, calories_remaining / meals_remaining),
+                800
+            )
+        else:
+            target_calories_this_meal = min(
+                max(200, calories_remaining),
+                800
+            )
         
-        # Find ingredients that exist in our nutrient database
-        found_ings = []
-        for ingredient in nutrient['food'].str.lower():
-            if re.search(rf'\b{re.escape(ingredient)}\b', combined_text.lower()):
-                found_ings.append(ingredient)
-        
-        found_ings = list(set(found_ings))
-        # print(f"🔍 Found ingredients for {row['Name']}: {found_ings}")
-
-        # Target macros for this specific meal
+        # Calculate proportional macros for this meal
         target_macros = [
-            row['Calories'],
-            row['ProteinContent'],
-            row['FatContent'],
-            row['CarbohydrateContent'],
-            row['FiberContent']
+            target_calories_this_meal,
+            target_calories_this_meal * 0.25 / 4,  # protein (25% of calories)
+            target_calories_this_meal * 0.25 / 9,  # fat (25% of calories) 
+            target_calories_this_meal * 0.5 / 4,   # carbs (50% of calories)
+            target_calories_this_meal * 0.035      # fiber (~35g per 1000 kcal)
         ]
-
-        # 🎯 OPTIMIZE INGREDIENT QUANTITIES
-        optimized_quantities = optimize_ingredient_weights(found_ings, target_macros, row['Name'])
-        # print(f"⚖️ Optimized quantities: {optimized_quantities}")
         
-        # Inject quantities into instructions
-        instructions_with_quantities = inject_quantities_into_instructions(instr, optimized_quantities)
-
-        # Calculate actual nutritional values based on optimized quantities
-        actual_calories = 0
-        actual_protein = 0
-        actual_fat = 0
-        actual_carbs = 0
-        actual_fiber = 0
+        # Extract ingredients from recipe
+        found_ings = extract_ingredients(row)
         
-        for ing, qty_str in optimized_quantities.items():
-            # Extract grams from string like "150g broccoli"
-            grams_match = re.search(r'(\d+)g', qty_str)
-            if grams_match:
-                grams = int(grams_match.group(1))
-                ing_data = nutrient[nutrient['food'].str.lower() == ing.lower()]
-                if not ing_data.empty:
-                    multiplier = grams / 100  # per 100g
-                    actual_calories += ing_data['calories'].values[0] * multiplier
-                    actual_protein += ing_data['protein'].values[0] * multiplier
-                    actual_fat += ing_data['fat'].values[0] * multiplier
-                    actual_carbs += ing_data['carbs'].values[0] * multiplier
-                    actual_fiber += ing_data['fiber'].values[0] * multiplier
+        # Optimize with accuracy constraints
+        optimized_quantities = optimize_ingredient_weights(
+            found_ings, target_macros, row['Name'], target_calories_this_meal
+        )
         
-        # If no ingredients were optimized, use original recipe values
-        if actual_calories == 0:
-            actual_calories = row['Calories']
-            actual_protein = row['ProteinContent']
-            actual_fat = row['FatContent']
-            actual_carbs = row['CarbohydrateContent']
-            actual_fiber = row['FiberContent']
-
-        # Add meal to diet plan
-        diet.append({
-            'Name': row['Name'],
-            'Target Calories': round(row['Calories'], 1),
-            'Optimized Calories': round(actual_calories, 1),
-            'Calories (kcal)': round(actual_calories, 1),
-            'Fat (g)': round(actual_fat, 1),
-            'Carbs (g)': round(actual_carbs, 1),
-            'Protein (g)': round(actual_protein, 1),
-            'Fiber (g)': round(actual_fiber, 1),
-            'Sugar (g)': round(row.get('SugarContent', 0), 1),
-            'Sodium (mg)': round(row.get('SodiumContent', 0), 1),
-            'Image': get_image_url(row.get('Images')),
-            'Optimized Ingredients': list(optimized_quantities.values()),
-            'Instructions': instructions_with_quantities,
-            'Calorie Match %': round((actual_calories / row['Calories']) * 100, 1) if row['Calories'] > 0 else 0
-        })
-
-        kcal_sum += actual_calories
+        # Calculate actual nutrition from optimized ingredients
+        actual_nutrition = calculate_actual_nutrition(optimized_quantities)
+        
+        # Only add meal if it's within our accuracy bounds (95-105%)
+        calorie_ratio = actual_nutrition['calories'] / target_calories_this_meal if target_calories_this_meal > 0 else 1
+        if 0.95 <= calorie_ratio <= 1.05 and len(optimized_quantities) > 0:
+            # Inject quantities into instructions
+            instructions_with_quantities = inject_quantities_into_instructions(
+                row.get('RecipeInstructions', ''), optimized_quantities
+            )
+            
+            diet.append({
+                'Name': row['Name'],
+                'Target Calories': round(target_calories_this_meal, 1),
+                'Actual Calories': round(actual_nutrition['calories'], 1),
+                'Calories (kcal)': round(actual_nutrition['calories'], 1),
+                'Protein (g)': round(actual_nutrition['protein'], 1),
+                'Fat (g)': round(actual_nutrition['fat'], 1),
+                'Carbs (g)': round(actual_nutrition['carbs'], 1),
+                'Fiber (g)': round(actual_nutrition['fiber'], 1),
+                'Sugar (g)': round(row.get('SugarContent', 0), 1),
+                'Sodium (mg)': round(row.get('SodiumContent', 0), 1),
+                'Image': get_image_url(row.get('Images')),
+                'Optimized Ingredients': list(optimized_quantities.values()),
+                'Instructions': instructions_with_quantities,
+                'Calorie Match %': round(calorie_ratio * 100, 1)
+            })
+            
+            kcal_sum += actual_nutrition['calories']
+            
+            # Early exit if we're close to target
+            if kcal_sum >= cal_target * (1 - tolerance):
+                break
 
     return {
         "bmr": round(bmr, 2),
@@ -619,49 +663,50 @@ def suggest_diet(user_input: dict, recipe_df: pd.DataFrame, max_meals: int = 6, 
 # -------------------------------------------
 # Example Usage
 # -------------------------------------------
-if __name__ == "__main__":
-    user_input = {
-        'gender': 0,  # 1 for male, 0 for female
-        'age': 20,
-        'height_cm': 150,
-        'weight_kg': 50,
-        'goal': 'maintain',
-        'Type': 'non-vegetarian',
-        'meal_type': 'general',
-        'health_conditions': ['hypertension'],  # e.g. ['diabetes', 'hypertension'],
-        'activity_type': 'yoga'
-    }
+# if __name__ == "__main__":
+   
+    
+#     user_input = {
+#         'gender': 1,  # 1 for male, 0 for female
+#         'age': 20,
+#         'height_cm': 170,
+#         'weight_kg': 50,
+#         'goal': 'weight_gain',  # e.g. 'weight_loss', 'weight_gain', 'maintain'
+#         'Type': 'non-vegetarian',
+#         'meal_type': 'general',
+#         'health_conditions': ['diabetes'],  # e.g. ['diabetes', 'hypertension'],
+#         'activity_type': 'hitt'
+#     }
 
-    print("🔄 Generating optimized diet plan...")
-    result = suggest_diet(user_input,recipe)
+#     print("🔄 Generating optimized diet plan...")
+#     result = suggest_diet(user_input, recipe)
 
-    print("\n" + "="*60)
-    print("📊 DIET OPTIMIZATION RESULTS")
-    print("="*60)
-    print(f"🔥 BMR: {result['bmr']} kcal/day")
-    print(f"📈 BMI: {result['bmi']}")
-    print(f"⚡ TDEE: {result['tdee']} kcal/day")
-    print(f"🎯 Calorie Target: {result['calorie_target']} kcal/day")
-    print(f"✅ Actual Calories: {result['actual_calories']} kcal/day")
-    print(f"🎪 Accuracy: {result['calorie_accuracy']}%")
-    print(f"🍽️ Number of meals: {len(result['diet_plan'])}")
+#     print("\n" + "="*60)
+#     print("📊 DIET OPTIMIZATION RESULTS")
+#     print("="*60)
+#     print(f"🔥 BMR: {result['bmr']} kcal/day")
+#     print(f"📈 BMI: {result['bmi']}")
+#     print(f"⚡ TDEE: {result['tdee']} kcal/day")
+#     print(f"🎯 Calorie Target: {result['calorie_target']} kcal/day")
+    
+#     print(f"✅ Actual Calories: {result['actual_calories']} kcal/day")
+#     print(f"🎪 Accuracy: {result['calorie_accuracy']}%")
+#     print(f"🍽️ Number of meals: {len(result['diet_plan'])}")
 
-    print("\n" + "="*60)
-    print("🍽️ OPTIMIZED MEAL PLAN")
-    print("="*60)
+#     print("\n" + "="*60)
+#     print("🍽️ OPTIMIZED MEAL PLAN")
+#     print("="*60)
 
-    for i, meal in enumerate(result['diet_plan'], 1):
-        print(f"\n🥗 Meal {i}: {meal['Name']}")
-        print(f"   Calories: {meal['Calories (kcal)']}")
-        
-
-        print(f"   🥩 Protein: {meal['Protein (g)']}g")
-        print(f"   🧈 Fat: {meal['Fat (g)']}g") 
-        print(f"   🍞 Carbs: {meal['Carbs (g)']}g")
-        print(f"   🌾 Fiber: {meal['Fiber (g)']}g")
-        print(f"   📝  Ingredients:")
-        for ingredient in meal['Optimized Ingredients']:
-            print(f"      • {ingredient}")
-        print(f"   👨‍🍳 Instructions:")
-        for line in meal['Instructions'].split('\n'):
-            print(f"      {line}")
+#     for i, meal in enumerate(result['diet_plan'], 1):
+#         print(f"\n🥗 Meal {i}: {meal['Name']}")
+#         print(f"   Calories: {meal['Calories (kcal)']}")
+#         print(f"   🥩 Protein: {meal['Protein (g)']}g")
+#         print(f"   🧈 Fat: {meal['Fat (g)']}g") 
+#         print(f"   🍞 Carbs: {meal['Carbs (g)']}g")
+#         print(f"   🌾 Fiber: {meal['Fiber (g)']}g")
+#         print(f"   📝  Ingredients:")
+#         for ingredient in meal['Optimized Ingredients']:
+#             print(f"      • {ingredient}")
+#         print(f"   👨‍🍳 Instructions:")
+#         for line in meal['Instructions'].split('\n'):
+            # print(f"      {line}")
