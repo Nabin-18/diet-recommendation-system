@@ -52,7 +52,7 @@ export const getAllInputDetailsOfUser = async (
         preferences,
         healthIssues,
         mealPlan,
-        mealFrequency,
+       
         user: { connect: { id: userId } },
       },
     });
@@ -67,7 +67,7 @@ export const getAllInputDetailsOfUser = async (
       Type: preferences.toLowerCase(), // 'vegetarian' or 'non-vegetarian'
       meal_type: mealPlan.toLowerCase(),
       health_conditions: healthIssues.split(",").map(c => c.trim().toLowerCase()),
-      meal_frequency: mealFrequency,
+     
       activity_type: activityType.toLowerCase(),
     };
 

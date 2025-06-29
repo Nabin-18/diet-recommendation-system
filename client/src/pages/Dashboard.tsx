@@ -5,36 +5,6 @@ import type { DashboardData } from "@/types";
 // import Instructions from "./Dashboard/Instructions";
 
 
-interface DashboardData {
-  user: {
-    name: string;
-    email: string;  
-  };
-  inputDetails: {
-    age: number;
-    gender: string;
-    weight: number;
-    height: number;
-    activity: string;
-    bmi: number;
-    goal: string;
-    preference: string;
-    mealFrequency: number;
-  };
-  prediction: {
-    carbs: number;
-    fats: number;
-    sugar: number;
-    sodium: number;
-    fiber: number;
-    calories: number;
-    protein: number;
-    bmr: number;
-    tdee: number;
-    targetCalories: number;
-    nutrients: Record<string, number>;
-    recommendedDiet: string;
-  };
 
 interface Props {
   dashboardData: DashboardData | null;
@@ -88,17 +58,17 @@ const Dashboard: React.FC<Props> = ({ dashboardData, loading, onRefresh, error }
 
   return (
     <div>
-      <UserDetails userData={data} />
+      <UserDetails userData={dashboardData} />
       <hr />
      <NutritionDetails
   nutrients={{
-    protein: data.prediction.protein,
-    carbs: data.prediction.carbs,
-    fats: data.prediction.fats,
-    sugar: data.prediction.sugar,
-    // sodium: data.prediction.sodium,
-    fiber: data.prediction.fiber,
-    // calories: data.prediction.calories,
+    protein: dashboardData.prediction.protein,
+    carbs: dashboardData.prediction.carbs,
+    fats: dashboardData.prediction.fats,
+    sugar: dashboardData.prediction.sugar,
+    // sodium: dashboardData.prediction.sodium,
+    fiber: dashboardData.prediction.fiber,
+    // calories: dashboardData.prediction.calories,
   }}
 />
 
@@ -130,9 +100,9 @@ const Dashboard: React.FC<Props> = ({ dashboardData, loading, onRefresh, error }
               carbs: dashboardData.prediction.carbs,
               fats: dashboardData.prediction.fats,
               sugar: dashboardData.prediction.sugar,
-              sodium: dashboardData.prediction.sodium,
+              // sodium: dashboardData.prediction.sodium,
               fiber: dashboardData.prediction.fiber,
-              calories: dashboardData.prediction.calories,
+              // calories: dashboardData.prediction.calories,
             }}
           />
           {/* <hr className="my-6" />

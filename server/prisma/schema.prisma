@@ -5,8 +5,8 @@
 // Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
 
 generator client {
-  provider = "prisma-client-js"
-  output   = "../generated/prisma"
+  provider   = "prisma-client-js"
+  output     = "../generated/prisma"
   engineType = "binary"
 }
 
@@ -23,7 +23,7 @@ model User {
   email            String             @unique
   password         String
   image            String?
-  gender          String
+  gender           String
   dob              DateTime?
   resetOtp         String?
   resetOtpExpiry   DateTime?
@@ -34,17 +34,16 @@ model User {
 }
 
 model UserInputDetails {
-  id            Int      @id @default(autoincrement()) //primary key
-  height        Int
-  weight        Int
-  age           Int
-  gender        String
-  goal          String
-  activityType  String
-  preferences   String
-  healthIssues  String
-  mealPlan      String
-  mealFrequency Int
+  id           Int    @id @default(autoincrement()) //primary key
+  height       Int
+  weight       Int
+  age          Int
+  gender       String
+  goal         String
+  activityType String
+  preferences  String
+  healthIssues String
+  mealPlan     String
 
   userId    Int //foreign key to User
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -53,26 +52,44 @@ model UserInputDetails {
 }
 
 model PredictedDetails {
-  id             Int      @id @default(autoincrement()) //primary key
-  bmr            Float?
-  tdee           Float?
-  bmi            Float?
-  calorie_target Float?
-  Name           String
-  calories       Float
-  protein        Float
-  carbs          Float
-  fats           Float
-  sodium         Float
-  fiber          Float
-  sugar          Float
-  Instructions   String
-  image          String
+  id               Int    @id @default(autoincrement())
+  bmr              Float?
+  tdee             Float?
+  bmi              Float?
+  calorie_target   Float?
+  actual_calories  Float?
+  calorie_accuracy Float?
+
   predictionDate DateTime @default(now())
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
-  //realtions
+  // Relations
   userId Int
-  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user   User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  meals  MealPrediction[] // 1 prediction has many meals
+}
+
+model MealPrediction {
+  id                 Int    @id @default(autoincrement())
+  name               String
+  target_calories    Float
+  optimized_calories Float
+  calories           Float
+  fat                Float
+  carbs              Float
+  protein            Float
+  fiber              Float
+  sugar              Float
+  sodium             Float
+  image              String
+  instructions       String
+  calorie_match_pct  Float
+
+  
+  optimized_ingredients Json
+
+  // Relation back to prediction
+  predictionId Int
+  prediction   PredictedDetails @relation(fields: [predictionId], references: [id], onDelete: Cascade)
 }
