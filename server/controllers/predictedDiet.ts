@@ -24,6 +24,7 @@ export const savePrediction = async (
       calorie_target,
     } = req.body;
 
+    // Create the prediction entry first
     const prediction = await prisma.predictedDetails.create({
       data: {
         userId,

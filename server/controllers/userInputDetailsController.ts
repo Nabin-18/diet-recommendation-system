@@ -52,7 +52,7 @@ export const getAllInputDetailsOfUser = async (
         preferences,
         healthIssues,
         mealPlan,
-        mealFrequency,
+       
         user: { connect: { id: userId } },
       },
     });

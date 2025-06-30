@@ -71,9 +71,33 @@ model PredictedDetails {
   predictionDate DateTime @default(now())
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
-  meals          Json
+ 
 
-  //realtions
+  // Relations
   userId Int
-  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user   User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  meals  MealPrediction[] // 1 prediction has many meals
+}
+
+model MealPrediction {
+  id                 Int    @id @default(autoincrement())
+  name               String
+  target_calories    Float
+  optimized_calories Float
+  calories           Float
+  fat                Float
+  carbs              Float
+  protein            Float
+  fiber              Float
+  sugar              Float
+  sodium             Float
+  image              String
+  instructions       String
+  calorie_match_pct  Float
+
+  optimized_ingredients Json
+
+  // Relation back to prediction
+  predictionId Int
+  prediction   PredictedDetails @relation(fields: [predictionId], references: [id], onDelete: Cascade)
 }
