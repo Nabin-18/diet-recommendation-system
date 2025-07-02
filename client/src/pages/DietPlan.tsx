@@ -28,6 +28,7 @@ interface MealData {
   sugar: number;
   sodium: number;
   instructions: string | string[];
+  optimized_ingredients: string[]; 
   mealType?: string; // breakfast, lunch, dinner, snack
 }
 
@@ -213,35 +214,107 @@ ${cleanInstructions
     }
   };
 
-  const getCleanInstructions = (instructions: string | string[]): string[] => {
-    if (Array.isArray(instructions)) {
-      return instructions
-        .flat()
-        .map((step) => step.trim())
-        .filter(Boolean);
-    }
-    if (typeof instructions === "string") {
-      let str = instructions.trim();
-      try {
-        str = str.replace(/[\r\n\t]/g, " ");
-        if (str.startsWith("[") && str.endsWith("]")) {
-          const arr = JSON.parse(str.replace(/'/g, '"'));
-          if (Array.isArray(arr)) {
-            return arr
-              .map((step: string) => step.replace(/^\d+\.\s*/, "").trim())
-              .filter(Boolean);
-          }
+  // const getCleanInstructions = (instructions: string | string[]): string[] => {
+  //   if (Array.isArray(instructions)) {
+  //     return instructions
+  //       .map((step) => step.trim())
+  //       .filter(Boolean);
+  //   }
+  //   if (typeof instructions === "string") {
+  //     let str = instructions.trim();
+  //     try {
+  //       str = str.replace(/[\r\n\t]/g, " ");
+  //       if (str.startsWith("[") && str.endsWith("]")) {
+  //         const arr = JSON.parse(str.replace(/'/g, '"'));
+  //         if (Array.isArray(arr)) {
+  //           return arr
+  //             .map((step: string) => step.replace(/^\d+\.\s*/, "").trim())
+  //             .filter(Boolean);
+  //         }
+  //       }
+  //     } catch (error) {
+  //       console.error("Error parsing instructions:", error);
+  //     }
+  //     return str
+  //       .split(/(?=\d+\.\s)|[.!?]\s+/)
+  //       .map((step) => step.replace(/^\d+\.\s*/, "").trim())
+  //       .filter(Boolean);
+  //   }
+  //   return [];
+  // };
+
+
+const getCleanInstructions = (
+  instructions: string | string[] | Record<string, string | string[]> | null | undefined
+) => {
+  // Handle null/undefined
+  if (!instructions) return [];
+  
+  // If it's already a clean array of strings
+  if (Array.isArray(instructions) && instructions.every(item => typeof item === 'string')) {
+    return instructions
+      .map(step => step.trim())
+      .filter(Boolean);
+  }
+  
+  // If it's an object with numeric keys (like your DB format: {1: [...], 2: [...], etc.})
+  if (typeof instructions === 'object' && !Array.isArray(instructions)) {
+    const allSteps: string[] = [];
+    Object.keys(instructions)
+      .sort((a, b) => parseInt(a) - parseInt(b)) // Sort by numeric key
+      .forEach(key => {
+        const steps = instructions[key];
+        if (Array.isArray(steps)) {
+          allSteps.push(...steps);
+        } else if (typeof steps === 'string') {
+          allSteps.push(steps);
         }
-      } catch (error) {
-        console.error("Error parsing instructions:", error);
+      });
+    
+    return allSteps
+      .map(step => step.trim())
+      .filter(Boolean);
+  }
+  
+  // If it's a string representation of your data structure
+  if (typeof instructions === 'string') {
+    let str = instructions.trim();
+    
+    try {
+      // Clean up the string format and try to parse
+      str = str.replace(/[\r\n\t]/g, ' ');
+      
+      // Handle the format like "1. ['step1', 'step2', ...]"
+      const match = str.match(/^\d+\.\s*(\[.*\])$/);
+      if (match) {
+        const arrayStr = match[1].replace(/'/g, '"');
+        const arr = JSON.parse(arrayStr);
+        if (Array.isArray(arr)) {
+          return arr
+            .map(step => step.trim())
+            .filter(Boolean);
+        }
       }
-      return str
-        .split(/(?=\d+\.\s)|[.!?]\s+/)
-        .map((step) => step.replace(/^\d+\.\s*/, "").trim())
-        .filter(Boolean);
+      
+      // Try direct JSON parse (in case it's a clean JSON string)
+      const parsed = JSON.parse(str.replace(/'/g, '"'));
+      if (typeof parsed === 'object') {
+        return getCleanInstructions(parsed); // Recursive call to handle object format
+      }
+      
+    } catch {
+      console.warn('Could not parse instructions as JSON, falling back to text parsing');
     }
-    return [];
-  };
+    
+    // Fallback: split by sentence boundaries
+    return str
+      .split(/[.!?]\s+/)
+      .map(step => step.replace(/^\d+\.\s*/, '').trim())
+      .filter(Boolean);
+  }
+  
+  return [];
+}
 
   const getBMICategory = (bmi: number) => {
     if (bmi < 18.5)
