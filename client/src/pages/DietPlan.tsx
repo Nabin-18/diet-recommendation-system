@@ -27,7 +27,7 @@ interface MealData {
   fiber: number;
   sugar: number;
   sodium: number;
-  Instructions: string | string[];
+  instructions: string | string[];
   mealType?: string; // breakfast, lunch, dinner, snack
 }
 
@@ -161,7 +161,7 @@ RECOMMENDED MEALS:
 `;
 
     dietData.recommendations.meals.forEach((meal, index) => {
-      const cleanInstructions = getCleanInstructions(meal.Instructions);
+      const cleanInstructions = getCleanInstructions(meal.instructions);
       content += `
 ${index + 1}. ${meal.name.toUpperCase()}
 - Calories: ${meal.calories}
@@ -467,7 +467,7 @@ ${cleanInstructions
               key={index}
               meal={meal}
               index={index}
-              instructions={getCleanInstructions(meal.Instructions)}
+              instructions={getCleanInstructions(meal.instructions)}
             />
           ))}
         </div>
