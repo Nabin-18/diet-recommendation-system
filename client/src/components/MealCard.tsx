@@ -1,7 +1,7 @@
-import React from "react";
+import React, { useState } from "react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Utensils, ChefHat, BookOpen } from "lucide-react";
+import { Utensils, ChefHat, BookOpen, ChevronDown, ChevronUp } from "lucide-react";
 
 interface MealData {
   name: string;
@@ -13,7 +13,7 @@ interface MealData {
   sugar: number;
   sodium: number;
   mealType?: string;
-  optimized_ingredients: string[];
+  optimized_ingredients: string[]; 
 }
 
 interface MealCardProps {
@@ -26,8 +26,11 @@ const MealCard: React.FC<MealCardProps> = ({
   meal,
   index,
   instructions,
-}) => (
-  <Card className="hover:shadow-md transition-shadow duration-200">
+}) => {
+  const [showInstructions, setShowInstructions] = useState(false);
+
+  return (
+  <Card>
     <CardHeader>
       <CardTitle className="flex items-center justify-between">
         <div className="flex items-center space-x-2">
@@ -101,22 +104,41 @@ const MealCard: React.FC<MealCardProps> = ({
       </div>
 
       {instructions.length > 0 && (
-        <div className="bg-blue-50 rounded-lg p-4 border border-blue-100">
-          <h3 className="font-semibold text-blue-900 mb-3 flex items-center">
-            <BookOpen className="w-4 h-4 mr-2 text-blue-700" />
-            Instructions:
-          </h3>
-          <ol className="list-decimal list-inside space-y-2 text-blue-800 leading-relaxed">
-            {instructions.map((step, idx) => (
-              <li key={idx} className="pl-1">
-                {step}
-              </li>
-            ))}
-          </ol>
+        <div>
+          <button
+            onClick={() => setShowInstructions(!showInstructions)}
+            className="w-full flex items-center justify-between p-3 bg-blue-50 rounded-lg border border-blue-100"
+          >
+            <div className="flex items-center">
+              <BookOpen className="w-4 h-4 mr-2 text-blue-700" />
+              <span className="font-semibold text-blue-900">Instructions</span>
+              <span className="ml-2 text-sm text-blue-600">
+                ({instructions.length} steps)
+              </span>
+            </div>
+            {showInstructions ? (
+              <ChevronUp className="w-4 h-4 text-blue-700" />
+            ) : (
+              <ChevronDown className="w-4 h-4 text-blue-700" />
+            )}
+          </button>
+          
+          {showInstructions && (
+            <div className="mt-2 p-4 bg-blue-50 rounded-lg border border-blue-100">
+              <ol className="list-decimal list-inside space-y-2 text-blue-800 leading-relaxed">
+                {instructions.map((step, idx) => (
+                  <li key={idx} className="pl-1">
+                    {step}
+                  </li>
+                ))}
+              </ol>
+            </div>
+          )}
         </div>
       )}
     </CardContent>
   </Card>
 );
+}
 
 export default MealCard;

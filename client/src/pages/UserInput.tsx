@@ -141,7 +141,7 @@ interface Props {
   onRefresh?: () => void;
 }
 
-const DietRecommended: React.FC<Props> = ({
+const UserInput: React.FC<Props> = ({
   dashboardData,
   loading: externalLoading,
   error: externalError,
@@ -606,4 +606,4 @@ const DietRecommended: React.FC<Props> = ({
   );
 };
 
-export default DietRecommended;
+export default UserInput;

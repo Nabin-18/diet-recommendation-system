@@ -4,16 +4,14 @@ import Home from "@/pages/Home";
 import Login from "@/pages/Login";
 import Signup from "@/pages/Signup";
 import MainPage from "@/pages/MainPage";
-import DietRecommended from "@/pages/DietRecommended";
-import Dashboard from "@/pages/Dashboard";
+import UserInput from "@/pages/UserInput";
 import ChatBot from "@/pages/chatbot/ChatBot";
 import DietPlan from "@/pages/DietPlan";
 import axios from "axios";
 import type { DashboardData } from "@/types";
 import NotificationComponent from "@/pages/NotificationComponent";
-// impoet image from public
-import CravingImg from "@/assets/crave.jpg";
 import WelcomePage from "@/pages/WelcomePage";
+import Profile from "@/pages/Profile";
 
 
 const AppRoutes = () => {
@@ -90,8 +88,8 @@ const AppRoutes = () => {
         <Route
           path="diet-recommend"
           element={
-            <DietRecommended 
-              dashboardData={data} 
+            <UserInput
+              dashboardData={data}
               loading={loading}
               error={error}
               onRefresh={refreshDashboard}
@@ -101,8 +99,8 @@ const AppRoutes = () => {
         <Route
           path="profile"
           element={
-            <Dashboard 
-              dashboardData={data} 
+            <Profile 
+              profileData={data} 
               loading={loading}
               error={error}
               onRefresh={refreshDashboard}

@@ -28,7 +28,7 @@ interface MealData {
   sugar: number;
   sodium: number;
   instructions: string | string[];
-  optimized_ingredients: string[]; 
+  optimized_ingredients: string[]; // Assuming this is an array of strings
   mealType?: string; // breakfast, lunch, dinner, snack
 }
 
@@ -74,7 +74,7 @@ const DietPlan: React.FC = () => {
         if (!token) {
           setDietData(null);
           setLoading(false);
-          navigate("/login");
+          navigate("/auth/login");
           return;
         }
         const res = await axios.get("/api/latest-prediction", {

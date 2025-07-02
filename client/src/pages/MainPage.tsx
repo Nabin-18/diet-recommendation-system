@@ -7,6 +7,7 @@ import {
   Utensils,
   NotebookPen,
   Activity,
+  LogOut,
   // Settings,
 } from "lucide-react";
 import { useState } from "react";
@@ -37,7 +38,7 @@ const MainPage = () => {
       notifications: notifications.profile,
       description: "Your personalized diet plan",
     },
-    
+
     {
       to: "notification",
       label: "Notification",
@@ -54,25 +55,22 @@ const MainPage = () => {
       notifications: notifications.profile,
       description: "Health metrics",
     },
-    // {
-    //   to: "chat-bot",
-    //   label: "Chat Bot",
-    //   icon: <MessageCircle className="w-5 h-5" />,
-    //   gradient: "from-violet-500 to-purple-600",
-    //   notifications: notifications.virtualDoctor,
-    //   description: "AI consultation",
-    // },
   ];
+
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    window.location.href = "/auth/login";
+  };
 
   // const totalNotifications = notificationCount;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
       {/* mobile Navigation */}
-      <div className="sm:flex lg:hidden bg-white border-b sticky top-0 z-50 shadow-sm">
-        <div className="flex justify-around items-center p-4">
+      <div className="flex lg:hidden bg-white border-b sticky top-0 z-50 shadow-sm">
+        <div className="flex justify-between sm:justify-around items-center p-4 px-6 sm:px-4 w-full">
           {navItems.map((item) => (
-            <Link key={item.to} to={item.to} className="relative">
+            <Link key={item.to} to={item.to} className="relative flex-shrink-0">
               <div
                 className={`p-3 rounded-xl bg-gradient-to-r ${item.gradient} text-white shadow-md hover:shadow-lg transition-shadow duration-200`}>
                 {item.icon}
@@ -84,6 +82,11 @@ const MainPage = () => {
               </div>
             </Link>
           ))}
+          <button
+            onClick={handleLogout}
+            className="relative flex-shrink-0 p-3 rounded-xl bg-gradient-to-r from-slate-500 to-slate-600 text-white shadow-md hover:shadow-lg transition-shadow duration-200">
+            <LogOut className="w-5 h-5" />
+          </button>
         </div>
       </div>
 
@@ -95,27 +98,27 @@ const MainPage = () => {
       {/* desktop Layout */}
       <div className="hidden lg:flex h-screen">
         {/* sidebar */}
-        <div className="w-80 bg-white border-r shadow-lg relative">
+        <div className="w-80 bg-white border-r shadow-lg flex flex-col">
           {/* Header */}
           {/* when click on header naviage to main-page */}
           <Link to={"/main-page"}>
-          <div className="p-6 border-b bg-gradient-to-r from-slate-50 to-blue-50">
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl flex items-center justify-center">
-                <Activity className="w-6 h-6 text-white" />
-              </div>
-              <div>
-                <h1 className="text-xl font-bold text-slate-800">
-                  Diet Dashboard
-                </h1>
-                <p className="text-sm text-slate-600">Manage your wellness</p>
+            <div className="p-6 border-b bg-gradient-to-r from-slate-50 to-blue-50 flex-shrink-0">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl flex items-center justify-center">
+                  <Activity className="w-6 h-6 text-white" />
+                </div>
+                <div>
+                  <h1 className="text-xl font-bold text-slate-800">
+                    Diet Dashboard
+                  </h1>
+                  <p className="text-sm text-slate-600">Manage your wellness</p>
+                </div>
               </div>
             </div>
-          </div>
           </Link>
 
           {/* Navigation Items */}
-          <div className="p-6 space-y-4 pb-20 flex flex-col gap-1">
+          <div className="flex-1 p-6 space-y-4 flex flex-col gap-1">
             {navItems.map((item) => (
               <Link key={item.to} to={item.to}>
                 <Button className="w-full h-auto p-0 bg-transparent hover:bg-transparent border-0 shadow-none">
@@ -148,21 +151,24 @@ const MainPage = () => {
             ))}
           </div>
 
-          {/* Settings */}
-          {/* <div className="absolute bottom-6 left-6 right-6">
+          {/* log out */}
+          <div className="p-6 flex-shrink-0">
             <Button
+              onClick={handleLogout}
               variant="outline"
-              className="w-full justify-start gap-3 h-12 bg-slate-50 hover:bg-slate-100 border-slate-200">
-              <Settings className="w-5 h-5 text-slate-600" />
-              <span className="font-medium text-slate-700">Settings</span>
+              className="w-full justify-start gap-3 h-14 bg-gradient-to-r from-slate-50 to-slate-100 hover:from-slate-100 hover:to-slate-200 border-2 border-slate-200 hover:border-slate-300 rounded-2xl transition-all duration-300 hover:shadow-lg group">
+              <LogOut className="w-5 h-5 text-slate-600 group-hover:text-slate-700 transition-colors" />
+              <span className="font-bold text-slate-700 group-hover:text-slate-800 transition-colors">
+                Logout
+              </span>
             </Button>
-          </div> */}
+          </div>
         </div>
 
         {/* Main Content Area */}
-        <div className="flex-1 bg-gray-50">
-          <div className="h-full p-6">
-            <div className="bg-white rounded-xl shadow-sm border h-full p-6">
+        <div className="flex-1 bg-gradient-to-br from-gray-50 via-slate-50 to-blue-50 overflow-hidden">
+          <div className="h-full p-6 overflow-auto">
+            <div className="bg-white rounded-xl shadow-sm border min-h-full p-6">
               <Outlet />
             </div>
           </div>
