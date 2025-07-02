@@ -9,17 +9,19 @@ generator client {
 }
 
 model User {
-  id             Int       @id @default(autoincrement())
-  name           String
-  email          String    @unique
-  password       String
-  image          String?
-  gender         String
-  dob            DateTime?
-  resetOtp       String?
-  resetOtpExpiry DateTime?
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
+  id               Int       @id @default(autoincrement())
+  name             String
+  email            String    @unique
+  password         String
+  image            String?
+  gender           String
+  dob              DateTime?
+  resetOtp         String?
+  resetOtpExpiry   DateTime?
+  currentWeight    Float?
+  lastWeightUpdate DateTime?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
 
   // Relations
   UserInputDetails UserInputDetails[]
@@ -124,9 +126,10 @@ model Feedback {
 model Notification {
   id      Int      @id @default(autoincrement())
   message String
+  type    String
+  title   String
   sentAt  DateTime @default(now())
   read    Boolean  @default(false)
-
-  userId Int
-  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId  Int
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }

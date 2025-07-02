@@ -29,14 +29,14 @@ import userRoutes from './routes/userRoutes';
 import userInputRoutes from './routes/userInputRoutes';
 import predictedDietRoutes from './routes/predictedDietRoutes';
 import dashboardRoute from './routes/dashboardRoute';
-import geminiRoute from './routes/geminiRoute';
+// import geminiRoute from './routes/geminiRoute';
 import notificationRoutes from './routes/notificationRoute';
 // Register routes
 app.use("/api/user", userRoutes);
 app.use("/api/user", userInputRoutes);
 app.use("/api", predictedDietRoutes);
 app.use("/api", dashboardRoute);
-app.use("/api", geminiRoute);
+// app.use("/api", geminiRoute);
 app.use("/api", notificationRoutes);
 
 // FastAPI bridge route

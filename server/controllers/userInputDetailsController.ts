@@ -1,6 +1,7 @@
 import prisma from "../config/db";
 import type { Request, Response } from "express";
 import axios from "axios";
+import { createNotification } from "./notificationController";
 
 interface AuthenticatedRequest extends Request {
   user?: {
@@ -136,6 +137,25 @@ export const getAllInputDetailsOfUser = async (
           },
         },
       });
+
+      try {
+        console.log("=== CREATING DIET PLAN NOTIFICATION ===");
+        await createNotification({
+          userId: userId,
+          type: "DIET_PLAN_GENERATED",
+          title: "New Diet Plan Ready! 🍽️",
+          message: `Your personalized ${goal.toLowerCase()} diet plan has been generated with ${
+            diet_plan.length
+          } meals! Target: ${calorie_target} calories. Check it out and start your healthy eating journey!`,
+        });
+        console.log("✅ Diet plan notification created successfully!");
+      } catch (notificationError) {
+        console.error(
+          "❌ Failed to create diet plan notification:",
+          notificationError
+        );
+        // Don't fail the whole process if notification fails
+      }
     }
 
     const responseData = {
