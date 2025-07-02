@@ -11,6 +11,10 @@ import DietPlan from "@/pages/DietPlan";
 import axios from "axios";
 import type { DashboardData } from "@/types";
 import NotificationComponent from "@/pages/NotificationComponent";
+// impoet image from public
+import CravingImg from "@/assets/crave.jpg";
+import WelcomePage from "@/pages/WelcomePage";
+
 
 const AppRoutes = () => {
   const [data, setData] = useState<DashboardData | null>(null);
@@ -80,15 +84,7 @@ const AppRoutes = () => {
         <Route
           index
           element={
-            <div className="text-center font-bold text-2xl mt-4">
-              Welcome to{" "}
-              <span className="text-red-500">Diet Recommendation System</span>
-              {error && (
-                <div className="text-red-500 text-sm mt-2">
-                  {error}
-                </div>
-              )}
-            </div>
+            <WelcomePage error={error ?? undefined} />
           }
         />
         <Route

@@ -1,40 +1,35 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
-generator client {
-  provider   = "prisma-client-js"
-  output     = "../generated/prisma"
-  engineType = "binary"
-}
-
 datasource db {
-  provider = "postgresql"
+  provider = "postgresql" // or your DB provider, e.g. "mysql"
   url      = env("DATABASE_URL")
 }
 
-//create user model 
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
 
 model User {
-  id               Int                @id @default(autoincrement())
-  name             String
-  email            String             @unique
-  password         String
-  image            String?
-  gender           String
-  dob              DateTime?
-  resetOtp         String?
-  resetOtpExpiry   DateTime?
-  createdAt        DateTime           @default(now())
-  updatedAt        DateTime           @updatedAt
+  id             Int       @id @default(autoincrement())
+  name           String
+  email          String    @unique
+  password       String
+  image          String?
+  gender         String
+  dob            DateTime?
+  resetOtp       String?
+  resetOtpExpiry DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  // Relations
   UserInputDetails UserInputDetails[]
   PredictedDetails PredictedDetails[]
+  Feedbacks        Feedback[]
+  Notifications    Notification[]
 }
 
 model UserInputDetails {
-  id            Int    @id @default(autoincrement()) //primary key
+  id            Int     @id @default(autoincrement())
   height        Int
   weight        Int
   age           Int
@@ -43,17 +38,26 @@ model UserInputDetails {
   activityType  String
   preferences   String
   healthIssues  String
-  mealPlan      String
-  mealFrequency Int
+  mealPlan      String? @default("balanced") // Make optional with default value
+  mealFrequency Int     @default(3) // Add back mealFrequency field
 
-  userId    Int //foreign key to User
+  // New Fields
+  startDate   DateTime // start of 15-day plan
+  endDate     DateTime // end of 15-day plan
+  cycleNumber Int // 1st, 2nd, 3rd cycle...
+
+  userId    Int
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  // Relations
+  feedback         Feedback?
+  predictedDetails PredictedDetails?
 }
 
 model PredictedDetails {
-  id             Int      @id @default(autoincrement()) //primary key
+  id             Int      @id @default(autoincrement())
   bmr            Float?
   tdee           Float?
   bmi            Float?
@@ -71,9 +75,58 @@ model PredictedDetails {
   predictionDate DateTime @default(now())
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
-  meals          Json
 
-  //realtions
+  userId Int
+  user   User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  meals  MealPrediction[]
+
+  // Link back to input
+  inputId     Int              @unique
+  inputDetail UserInputDetails @relation(fields: [inputId], references: [id], onDelete: Cascade)
+}
+
+model MealPrediction {
+  id                    Int    @id @default(autoincrement())
+  name                  String
+  target_calories       Float
+  optimized_calories    Float
+  calories              Float
+  fat                   Float
+  carbs                 Float
+  protein               Float
+  fiber                 Float
+  sugar                 Float
+  sodium                Float
+  image                 String
+  instructions          String
+  calorie_match_pct     Float
+  optimized_ingredients Json
+
+  predictionId Int
+  prediction   PredictedDetails @relation(fields: [predictionId], references: [id], onDelete: Cascade)
+}
+
+model Feedback {
+  id           Int     @id @default(autoincrement())
+  weightChange Float?
+  achieved     Boolean
+  note         String?
+
+  userId Int
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  inputDetailId Int              @unique
+  inputDetail   UserInputDetails @relation(fields: [inputDetailId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+}
+
+model Notification {
+  id      Int      @id @default(autoincrement())
+  message String
+  sentAt  DateTime @default(now())
+  read    Boolean  @default(false)
+
   userId Int
   user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }

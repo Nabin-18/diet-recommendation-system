@@ -1,7 +1,13 @@
 import prisma from "../config/db";
-import type { Response } from "express";
-import type { AuthenticatedRequest } from "../middleware/authMiddleware";
+import type { Request, Response } from "express";
 import axios from "axios";
+
+interface AuthenticatedRequest extends Request {
+  user?: {
+    id: number;
+    email: string;
+  };
+}
 
 interface UserInputDetails {
   height: number;
@@ -12,8 +18,11 @@ interface UserInputDetails {
   activityType: string;
   preferences: string;
   healthIssues: string;
-  mealPlan: string;
+  mealPlan?: string; // Make optional
   mealFrequency: number;
+  startDate: string;
+  endDate: string;
+  cycleNumber: number;
 }
 
 export const getAllInputDetailsOfUser = async (
@@ -21,6 +30,14 @@ export const getAllInputDetailsOfUser = async (
   res: Response
 ): Promise<void> => {
   try {
+    const userId = req.user?.id;
+    console.log("User ID from request:", userId); // Debug log
+
+    if (!userId) {
+      res.status(401).json({ message: "Unauthorized: User ID missing" });
+      return;
+    }
+
     const {
       height,
       weight,
@@ -32,13 +49,16 @@ export const getAllInputDetailsOfUser = async (
       healthIssues,
       mealPlan,
       mealFrequency,
+      startDate,
+      endDate,
+      cycleNumber,
     } = req.body as UserInputDetails;
 
-    const userId = req.user?.id;
-    if (!userId) {
-      res.status(401).json({ message: "Unauthorized: User ID missing" });
-      return;
-    }
+    // Add validation for required fields - mealPlan is now optional
+    // if (!mealPlan) {
+    //   res.status(400).json({ message: "mealPlan is required" });
+    //   return;
+    // }
 
     // 1. Save input data to DB
     const inputDetails = await prisma.userInputDetails.create({
@@ -51,8 +71,13 @@ export const getAllInputDetailsOfUser = async (
         activityType,
         preferences,
         healthIssues,
-        mealPlan,
-        mealFrequency,
+        mealPlan: mealPlan || "balanced", // Provide default value
+        mealFrequency: mealFrequency || 3,
+        startDate: startDate ? new Date(startDate) : new Date(),
+        endDate: endDate
+          ? new Date(endDate)
+          : new Date(Date.now() + 15 * 24 * 60 * 60 * 1000), // 15 days from now
+        cycleNumber: cycleNumber || 1,
         user: { connect: { id: userId } },
       },
     });
@@ -64,12 +89,11 @@ export const getAllInputDetailsOfUser = async (
       height_cm: height,
       weight_kg: weight,
       goal: goal.toLowerCase(),
-      Type: preferences.toLowerCase(), // 'vegetarian' or 'non-vegetarian'
-      meal_type: mealPlan.toLowerCase(),
+      Type: preferences.toLowerCase(),
+      meal_type: (mealPlan || "balanced").toLowerCase(),
       health_conditions: healthIssues
         .split(",")
         .map((c) => c.trim().toLowerCase()),
-      meal_frequency: mealFrequency,
       activity_type: activityType.toLowerCase(),
     };
 
@@ -81,7 +105,7 @@ export const getAllInputDetailsOfUser = async (
     const { bmr, tdee, bmi, calorie_target, diet_plan } = pythonResponse.data;
 
     // 4. Save predicted diet to PredictedDetails
-    if (diet_plan.length > 0) {
+    if (diet_plan?.length > 0) {
       await prisma.predictedDetails.create({
         data: {
           bmr,
@@ -89,35 +113,45 @@ export const getAllInputDetailsOfUser = async (
           bmi,
           calorie_target,
           user: { connect: { id: userId } },
-          meals: diet_plan.map((item: any) => ({
-            Name: item.Name,
-            calories: item["Calories (kcal)"],
-            protein: item["Protein (g)"],
-            carbs: item["Carbs (g)"],
-            fats: item["Fat (g)"],
-            sodium: item["Sodium (mg)"],
-            fiber: item["Fiber (g)"],
-            sugar: item["Sugar (g)"],
-            Instructions: item.Instructions,
-            image: item.Image,
-            mealType: item.mealType,
-          })),
+          inputDetail: { connect: { id: inputDetails.id } },
+          meals: {
+            create: diet_plan.map((item: any) => ({
+              name: item.Name || "Unknown Meal",
+              target_calories:
+                item.target_calories || item["Calories (kcal)"] || 0,
+              optimized_calories:
+                item.optimized_calories || item["Calories (kcal)"] || 0,
+              calories: item["Calories (kcal)"] || 0,
+              protein: item["Protein (g)"] || 0,
+              carbs: item["Carbs (g)"] || 0,
+              fat: item["Fat (g)"] || 0, // Fixed: changed from 'fats' to 'fat'
+              sodium: item["Sodium (mg)"] || 0,
+              fiber: item["Fiber (g)"] || 0,
+              sugar: item["Sugar (g)"] || 0,
+              instructions: item.Instructions || "No instructions available",
+              image: item.Image || "No image available",
+              calorie_match_pct: item.calorie_match_pct || 100,
+              optimized_ingredients: item.optimized_ingredients || {},
+            })),
+          },
         },
       });
     }
 
-    res.status(200).json({
-      userId,
-      message: "Input and prediction saved",
+    const responseData = {
+      message: "Input and prediction saved successfully",
+      userId: userId, // Add userId to response
       inputDetails,
-      dietPlan: diet_plan,
       bmr,
       tdee,
       bmi,
       calorie_target,
-    });
+    };
+
+    console.log("Sending response:", responseData); // Debug log
+    res.status(200).json(responseData);
   } catch (error) {
-    console.error("Error:", error);
+    console.error("Error in user input processing:", error);
     res.status(500).json({ message: "Server error" });
   }
 };

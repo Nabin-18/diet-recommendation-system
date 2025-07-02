@@ -17,7 +17,6 @@ import type { DashboardData } from "@/types";
 import FormField from "@/components/FormField";
 import FormSelect from "@/components/FormSelect";
 
-
 //options for form
 const GENDER_OPTIONS = [
   { value: "male", label: "Male" },
@@ -95,14 +94,16 @@ const dietFormInputSchema = z.object({
   healthIssues: z.enum(["asthama", "hypertension", "diabetes", "normal"], {
     required_error: "Please select your health condition",
   }),
-  mealPlan: z.enum(["general", "breakfast", "lunch", "dinner"], {
-    required_error: "Please select meal type",
-  }),
+  mealPlan: z.enum(["general", "breakfast", "lunch", "dinner"]).optional(),
   mealFrequency: z
     .number()
     .int()
     .min(1, "Meal frequency must be between 1 and 4")
-    .max(4, "Meal frequency must be between 1 and 4"),
+    .max(4, "Meal frequency must be between 1 and 4")
+    .optional(),
+  startDate: z.string().optional(),
+  endDate: z.string().optional(),
+  cycleNumber: z.number().optional(),
 });
 
 // processed schematransformations for api
@@ -252,15 +253,33 @@ const DietRecommended: React.FC<Props> = ({
     try {
       const data = dietFormSchema.parse(inputData);
 
+      // Add default values for backend required fields
+      const submitData = {
+        ...data,
+        mealPlan: data.mealPlan || "general",
+        mealFrequency: data.mealFrequency || 3,
+        startDate: data.startDate || new Date().toISOString(),
+        endDate:
+          data.endDate ||
+          new Date(Date.now() + 15 * 24 * 60 * 60 * 1000).toISOString(),
+        cycleNumber: data.cycleNumber || 1,
+      };
+
       const response = await axios.post(
         "http://localhost:5000/api/user/user-input",
-        data,
+        submitData,
         {
           headers: { Authorization: `Bearer ${token}` },
         }
       );
 
+      console.log("Server response:", response.data); // Debug log
+
       if (!response.data?.userId) {
+        console.error(
+          "Missing userId in response. Full response:",
+          response.data
+        );
         throw new Error("Server response incomplete - missing user ID");
       }
 

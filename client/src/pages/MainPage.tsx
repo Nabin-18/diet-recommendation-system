@@ -18,7 +18,7 @@ const MainPage = () => {
     virtualDoctor: 0,
   });
 
-  const notificationCount = 7; // Total notifications for notification page
+  const notificationCount = 0; // total notifications for notification page
 
   const navItems = [
     {
@@ -28,14 +28,6 @@ const MainPage = () => {
       gradient: "from-emerald-500 to-teal-600",
       notifications: notifications.userInput,
       description: "Personalized nutrition",
-    },
-    {
-      to: "profile",
-      label: "Profile",
-      icon: <User className="w-5 h-5" />,
-      gradient: "from-blue-500 to-indigo-600",
-      notifications: notifications.profile,
-      description: "Health metrics",
     },
     {
       to: "diet-plan",
@@ -54,6 +46,14 @@ const MainPage = () => {
       notifications: notificationCount,
       description: "View all notifications",
     },
+    {
+      to: "profile",
+      label: "Profile",
+      icon: <User className="w-5 h-5" />,
+      gradient: "from-blue-500 to-indigo-600",
+      notifications: notifications.profile,
+      description: "Health metrics",
+    },
     // {
     //   to: "chat-bot",
     //   label: "Chat Bot",
@@ -68,7 +68,7 @@ const MainPage = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
-      {/* Mobile Navigation */}
+      {/* mobile Navigation */}
       <div className="sm:flex lg:hidden bg-white border-b sticky top-0 z-50 shadow-sm">
         <div className="flex justify-around items-center p-4">
           {navItems.map((item) => (
@@ -87,16 +87,18 @@ const MainPage = () => {
         </div>
       </div>
 
-      {/* Mobile Content */}
+      {/* mobile Content */}
       <div className="block lg:hidden p-4">
         <Outlet />
       </div>
 
-      {/* Desktop Layout */}
+      {/* desktop Layout */}
       <div className="hidden lg:flex h-screen">
-        {/* Sidebar */}
+        {/* sidebar */}
         <div className="w-80 bg-white border-r shadow-lg relative">
           {/* Header */}
+          {/* when click on header naviage to main-page */}
+          <Link to={"/main-page"}>
           <div className="p-6 border-b bg-gradient-to-r from-slate-50 to-blue-50">
             <div className="flex items-center gap-3">
               <div className="w-12 h-12 bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl flex items-center justify-center">
@@ -110,6 +112,7 @@ const MainPage = () => {
               </div>
             </div>
           </div>
+          </Link>
 
           {/* Navigation Items */}
           <div className="p-6 space-y-4 pb-20 flex flex-col gap-1">
