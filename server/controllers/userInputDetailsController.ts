@@ -131,7 +131,7 @@ export const getAllInputDetailsOfUser = async (
               instructions: item.Instructions || "No instructions available",
               image: item.Image || "No image available",
               calorie_match_pct: item.calorie_match_pct || 100,
-              optimized_ingredients: item.optimized_ingredients || {},
+              optimized_ingredients: item["Optimized Ingredients"] || [],
             })),
           },
         },

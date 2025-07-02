@@ -100,7 +100,7 @@ model MealPrediction {
   image                 String
   instructions          String
   calorie_match_pct     Float
-  optimized_ingredients Json
+  optimized_ingredients Json?
 
   predictionId Int
   prediction   PredictedDetails @relation(fields: [predictionId], references: [id], onDelete: Cascade)
