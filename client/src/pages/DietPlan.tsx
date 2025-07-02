@@ -19,11 +19,11 @@ import MealCard from "@/components/MealCard";
 import InfoRow from "@/components/InfoRow";
 
 interface MealData {
-  Name: string;
+  name: string;
   calories: number;
   protein: number;
   carbs: number;
-  fats: number;
+  fat: number;
   fiber: number;
   sugar: number;
   sodium: number;
@@ -163,11 +163,11 @@ RECOMMENDED MEALS:
     dietData.recommendations.meals.forEach((meal, index) => {
       const cleanInstructions = getCleanInstructions(meal.Instructions);
       content += `
-${index + 1}. ${meal.Name.toUpperCase()}
+${index + 1}. ${meal.name.toUpperCase()}
 - Calories: ${meal.calories}
 - Protein: ${meal.protein}g
 - Carbs: ${meal.carbs}g
-- Fats: ${meal.fats}g
+- Fats: ${meal.fat}g
 - Fiber: ${meal.fiber}g
 - Sugar: ${meal.sugar}g
 - Sodium: ${meal.sodium}mg
@@ -442,13 +442,13 @@ ${cleanInstructions
                   {userInput.preferences}
                 </span>
               </div>
-              <div className="flex justify-between">
+              {/* <div className="flex justify-between">
                 <span className="text-gray-600">Meal Plan:</span>
                 <span className="font-medium">{userInput.mealPlan}</span>
-              </div>
+              </div> */}
               <div className="flex justify-between">
                 <span className="text-gray-600">Meals/Day:</span>
-                <span className="font-medium">{userInput.mealFrequency}</span>
+                <span className="font-medium">{recommendations.meals.length}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-600">Health Issues:</span>

@@ -4,11 +4,11 @@ import { Badge } from "@/components/ui/badge";
 import { Utensils } from "lucide-react";
 
 interface MealData {
-  Name: string;
+  name: string;
   calories: number;
   protein: number;
   carbs: number;
-  fats: number;
+  fat: number;
   fiber: number;
   sugar: number;
   sodium: number;
@@ -31,7 +31,7 @@ const MealCard: React.FC<MealCardProps> = ({
         <div className="flex items-center space-x-2">
           <Utensils className="w-5 h-5" />
           <span>
-            Meal {index + 1}: {meal.Name}
+            Meal {index + 1}: {meal.name}
           </span>
         </div>
         {meal.mealType && (
@@ -58,7 +58,7 @@ const MealCard: React.FC<MealCardProps> = ({
           <div className="text-sm text-gray-600">Carbs</div>
         </div>
         <div className="text-center">
-          <div className="text-2xl font-bold">{meal.fats}g</div>
+          <div className="text-2xl font-bold">{meal.fat}g</div>
           <div className="text-sm text-gray-600">Fats</div>
         </div>
         <div className="text-center">
