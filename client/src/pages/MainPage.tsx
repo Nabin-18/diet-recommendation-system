@@ -10,7 +10,19 @@ import {
   LogOut,
   // Settings,
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+
+interface Notification {
+  id: number;
+  userId: number;
+  type: string;
+  title: string;
+  message: string;
+  read: boolean;
+  sentAt: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
 
 const MainPage = () => {
   const [notifications] = useState({
@@ -19,7 +31,39 @@ const MainPage = () => {
     virtualDoctor: 0,
   });
 
-  const notificationCount = 0; // total notifications for notification page
+  const [notificationCount, setNotificationCount] = useState(0);
+
+  const fetchUnreadNotificationCount = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) return;
+
+      const response = await fetch("http://localhost:5000/api/notifications", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (response.ok) {
+        const notifications: Notification[] = await response.json();
+        const unreadCount = notifications.filter((n: Notification) => !n.read).length;
+        setNotificationCount(unreadCount);
+      }
+    } catch (error) {
+      console.error("Error fetching notification count:", error);
+    }
+  };
+
+  // Fetch notification count on component mount
+  useEffect(() => {
+    fetchUnreadNotificationCount();
+
+    // Optional: Set up interval to refresh count every 30 seconds
+    const interval = setInterval(fetchUnreadNotificationCount, 30000);
+
+    return () => clearInterval(interval);
+  }, []);
 
   const navItems = [
     {
@@ -61,8 +105,6 @@ const MainPage = () => {
     localStorage.removeItem("token");
     window.location.href = "/auth/login";
   };
-
-  // const totalNotifications = notificationCount;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
