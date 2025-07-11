@@ -12,7 +12,7 @@ import type { DashboardData } from "@/types";
 import NotificationComponent from "@/pages/NotificationComponent";
 import WelcomePage from "@/pages/WelcomePage";
 import Profile from "@/pages/Profile";
-
+import Feedback from "@/pages/Feedback";
 
 const AppRoutes = () => {
   const [data, setData] = useState<DashboardData | null>(null);
@@ -23,13 +23,13 @@ const AppRoutes = () => {
   useEffect(() => {
     const fetchDashboard = async () => {
       const token = localStorage.getItem("token");
-      
+
       // Only fetch if we're on a protected route and have a token
-      const protectedRoutes = ['/main-page'];
-      const isProtectedRoute = protectedRoutes.some(route => 
+      const protectedRoutes = ["/main-page"];
+      const isProtectedRoute = protectedRoutes.some((route) =>
         location.pathname.startsWith(route)
       );
-      
+
       if (!token || !isProtectedRoute) {
         setLoading(false);
         return;
@@ -38,17 +38,17 @@ const AppRoutes = () => {
       try {
         setLoading(true);
         setError(null);
-        
+
         const res = await axios.get("http://localhost:5000/api/dashboard", {
           headers: { Authorization: `Bearer ${token}` },
         });
-        
+
         // console.log("Fetch Dashboard", JSON.stringify(res.data));
         setData(res.data);
       } catch (err) {
         console.error("Error fetching dashboard data:", err);
         setError("Failed to fetch dashboard data");
-        
+
         // If token is invalid, clear it
         if (axios.isAxiosError(err) && err.response?.status === 401) {
           localStorage.removeItem("token");
@@ -79,12 +79,7 @@ const AppRoutes = () => {
 
       {/* Protected routes under main-page */}
       <Route path="/main-page" element={<MainPage />}>
-        <Route
-          index
-          element={
-            <WelcomePage error={error ?? undefined} />
-          }
-        />
+        <Route index element={<WelcomePage error={error ?? undefined} />} />
         <Route
           path="diet-recommend"
           element={
@@ -99,8 +94,8 @@ const AppRoutes = () => {
         <Route
           path="profile"
           element={
-            <Profile 
-              profileData={data} 
+            <Profile
+              profileData={data}
               loading={loading}
               error={error}
               onRefresh={refreshDashboard}
@@ -109,9 +104,10 @@ const AppRoutes = () => {
         />
         <Route path="notification" element={<NotificationComponent />} />
         <Route path="chat-bot" element={<ChatBot />} />
-        
         {/* Add the DietPlan route */}
         <Route path="diet-plan" element={<DietPlan />} />
+
+        <Route path="feedback-form/:inputDetailId" element={<Feedback />} />
       </Route>
     </Routes>
   );

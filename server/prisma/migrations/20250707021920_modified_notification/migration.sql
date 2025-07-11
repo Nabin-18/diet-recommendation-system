@@ -17,6 +17,6 @@ ALTER TABLE "User" ADD COLUMN     "currentWeight" DOUBLE PRECISION,
 ADD COLUMN     "lastWeightUpdate" TIMESTAMP(3);
 
 -- AlterTable
-ALTER TABLE "UserInputDetails" ADD COLUMN     "mealFrequency" INTEGER NOT NULL DEFAULT 3,
-ALTER COLUMN "mealPlan" DROP NOT NULL,
-ALTER COLUMN "mealPlan" SET DEFAULT 'balanced';
+ALTER TABLE "UserInputDetails" ALTER COLUMN "mealPlan" DROP NOT NULL,
+ALTER COLUMN "mealPlan" SET DEFAULT 'balanced',
+ALTER COLUMN "cycleNumber" DROP NOT NULL;

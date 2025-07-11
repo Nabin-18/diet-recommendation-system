@@ -20,7 +20,7 @@ interface UserInputDetails {
   preferences: string;
   healthIssues: string;
   mealPlan?: string; // Make optional
-  mealFrequency: number;
+  // mealFrequency?: number;
   startDate: string;
   endDate: string;
   cycleNumber: number;
@@ -49,7 +49,7 @@ export const getAllInputDetailsOfUser = async (
       preferences,
       healthIssues,
       mealPlan,
-      mealFrequency,
+      
       startDate,
       endDate,
       cycleNumber,
@@ -73,7 +73,7 @@ export const getAllInputDetailsOfUser = async (
         preferences,
         healthIssues,
         mealPlan: mealPlan || "balanced", // Provide default value
-        mealFrequency: mealFrequency || 3,
+       
         startDate: startDate ? new Date(startDate) : new Date(),
         endDate: endDate
           ? new Date(endDate)

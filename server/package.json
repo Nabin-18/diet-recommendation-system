@@ -15,7 +15,7 @@
     "typescript": "^5"
   },
   "dependencies": {
-    "@prisma/client": "^6.9.0",
+    "@prisma/client": "^6.11.1",
     "axios": "^1.10.0",
     "bcrypt": "^6.0.0",
     "bcryptjs": "^3.0.2",
@@ -25,7 +25,8 @@
     "fetch": "^1.1.0",
     "jsonwebtoken": "^9.0.2",
     "multer": "^2.0.1",
+    "node-cron": "^4.2.0",
     "nodemailer": "^7.0.4",
-    "prisma": "^6.9.0"
+    "prisma": "^6.11.1"
   }
 }
