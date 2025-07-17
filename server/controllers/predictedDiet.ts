@@ -14,7 +14,7 @@ export const savePrediction = async (
 ): Promise<void> => {
   try {
     const userId = req.user?.id;
-    const { inputId, meals, bmr, tdee, bmi, calorie_target } = req.body;
+    const { inputId, meals, bmr, tdee, bmi, calorie_target, expectedWeight } = req.body;
 
     if (!userId) {
       res.status(401).json({ message: "Unauthorized" });
@@ -28,6 +28,7 @@ export const savePrediction = async (
         tdee,
         bmi,
         calorie_target,
+        expectedWeight,
         user: { connect: { id: userId } },
         inputDetail: { connect: { id: inputId } },
         meals: {
