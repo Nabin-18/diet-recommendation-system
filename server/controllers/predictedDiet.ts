@@ -8,20 +8,42 @@ interface AuthenticatedRequest extends Request {
   };
 }
 
+// Utility function to calculate expected weight
+const calculateExpectedWeight = (
+  currentWeight: number,
+  goal: string
+): number => {
+  if (goal === "weight loss") return currentWeight - 2;
+  if (goal === "weight gain") return currentWeight + 2;
+  return currentWeight; 
+};
+
 export const savePrediction = async (
   req: AuthenticatedRequest,
   res: Response
 ): Promise<void> => {
   try {
     const userId = req.user?.id;
-    const { inputId, meals, bmr, tdee, bmi, calorie_target, expectedWeight } = req.body;
+    const { inputId, meals, bmr, tdee, bmi, calorie_target } = req.body;
 
     if (!userId) {
       res.status(401).json({ message: "Unauthorized" });
       return;
     }
 
-    // Create the prediction entry
+    // Get user input to determine goal and weight
+    const inputDetail = await prisma.userInputDetails.findUnique({
+      where: { id: inputId },
+    });
+
+    if (!inputDetail) {
+      res.status(404).json({ message: "User input details not found" });
+      return;
+    }
+
+    const expectedWeight = calculateExpectedWeight(inputDetail.weight, inputDetail.goal);
+    console.log(expectedWeight)
+
     const prediction = await prisma.predictedDetails.create({
       data: {
         bmr,
@@ -72,7 +94,7 @@ export const getPredictedDetails = async (
   res: Response
 ) => {
   const userId = req.user?.id;
-  const limit = Number(req.query.limit) || 3; // Default to 3 if not provided
+  const limit = Number(req.query.limit) || 3;
 
   if (!userId) {
     return res.status(401).json({ message: "Unauthorized" });
@@ -101,11 +123,11 @@ export const getLatestDietPlan = async (
   res: Response
 ) => {
   const userId = req.user?.id;
-  console.log("getLatestDietPlan - User ID:", userId); // Debug log
 
   if (!userId) {
     return res.status(401).json({ message: "Unauthorized" });
   }
+
   try {
     const latestPrediction = await prisma.predictedDetails.findFirst({
       where: { userId },
@@ -121,12 +143,9 @@ export const getLatestDietPlan = async (
       orderBy: { createdAt: "desc" },
     });
 
-    console.log("Found latestPrediction:", !!latestPrediction); // Debug log
-    console.log("Found latestUserInput:", !!latestUserInput); // Debug log
-
     res.status(200).json({
-      latestPrediction: latestPrediction,
-      latestUserInput: latestUserInput,
+      latestPrediction,
+      latestUserInput,
     });
   } catch (error) {
     console.error("Error fetching latest diet plan:", error);
