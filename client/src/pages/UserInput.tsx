@@ -287,7 +287,9 @@ const UserInput: React.FC<Props> = ({
         "http://localhost:5000/api/latest-prediction",
         { headers: { Authorization: `Bearer ${token}` } }
       );
+     
       const { latestPrediction, latestUserInput } = latestRes.data;
+    
 
       const dietPlanData = {
         userInput: latestUserInput,
@@ -348,7 +350,8 @@ const UserInput: React.FC<Props> = ({
           {onRefresh && (
             <button
               onClick={onRefresh}
-              className="mt-2 mx-auto block text-red-600 underline hover:text-red-800">
+              className="mt-2 mx-auto block text-red-600 underline hover:text-red-800"
+            >
               Try Again
             </button>
           )}
@@ -512,7 +515,8 @@ const UserInput: React.FC<Props> = ({
                     <Select
                       onValueChange={field.onChange}
                       value={field.value ?? ""}
-                      disabled={isFormLoading}>
+                      disabled={isFormLoading}
+                    >
                       <SelectTrigger className="rounded-[8px]">
                         <SelectValue placeholder="Meal Type Focus" />
                       </SelectTrigger>
@@ -544,7 +548,8 @@ const UserInput: React.FC<Props> = ({
                     <Select
                       onValueChange={(val) => field.onChange(Number(val))}
                       value={field.value?.toString() || ""}
-                      disabled={isFormLoading}>
+                      disabled={isFormLoading}
+                    >
                       <SelectTrigger className="rounded-[8px]">
                         <SelectValue placeholder="Meals Per Day" />
                       </SelectTrigger>
@@ -569,7 +574,8 @@ const UserInput: React.FC<Props> = ({
               <Button
                 type="submit"
                 className="px-8 py-2 rounded-[8px] font-semibold"
-                disabled={isFormLoading}>
+                disabled={isFormLoading}
+              >
                 {isFormLoading ? "Generating..." : "Get My Diet Plan"}
               </Button>
 
@@ -578,7 +584,8 @@ const UserInput: React.FC<Props> = ({
                 variant="outline"
                 onClick={handleReset}
                 className="px-8 py-2 rounded-[8px] font-semibold"
-                disabled={isFormLoading}>
+                disabled={isFormLoading}
+              >
                 Reset Form
               </Button>
             </div>

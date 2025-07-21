@@ -115,7 +115,7 @@ const Feedback = () => {
             diet plan?
           </p>
           <button
-            onClick={() => navigate("/diet-plan")}
+            onClick={() => navigate("/main-page/diet-plan")}
             className="bg-green-600 text-white px-4 py-2 rounded mt-2"
           >
             Yes

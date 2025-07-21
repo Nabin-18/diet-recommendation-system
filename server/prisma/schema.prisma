@@ -62,6 +62,7 @@ model PredictedDetails {
   calorie_target Float?
   tdee           Float?
   expectedWeight Float?
+  weightChange   Float?           
   Instructions   String?
   Name           String?
   calories       Float?
@@ -77,6 +78,7 @@ model PredictedDetails {
   inputDetail    UserInputDetails @relation(fields: [inputId], references: [id], onDelete: Cascade)
   user           User             @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
+
 
 model MealPrediction {
   id                    Int              @id @default(autoincrement())

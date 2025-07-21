@@ -19,8 +19,7 @@ interface UserInputDetails {
   activityType: string;
   preferences: string;
   healthIssues: string;
-  mealPlan?: string; // Make optional
-  // mealFrequency?: number;
+  mealPlan?: string;
   startDate: string;
   endDate: string;
   cycleNumber: number;
@@ -32,8 +31,6 @@ export const getAllInputDetailsOfUser = async (
 ): Promise<void> => {
   try {
     const userId = req.user?.id;
-    console.log("User ID from request:", userId); // Debug log
-
     if (!userId) {
       res.status(401).json({ message: "Unauthorized: User ID missing" });
       return;
@@ -49,19 +46,17 @@ export const getAllInputDetailsOfUser = async (
       preferences,
       healthIssues,
       mealPlan,
-      
       startDate,
       endDate,
       cycleNumber,
     } = req.body as UserInputDetails;
 
-    // Add validation for required fields - mealPlan is now optional
-    // if (!mealPlan) {
-    //   res.status(400).json({ message: "mealPlan is required" });
-    //   return;
-    // }
+    const start = startDate ? new Date(startDate) : new Date();
+    const end = endDate
+      ? new Date(endDate)
+      : new Date(Date.now() + 15 * 24 * 60 * 60 * 1000);
 
-    // 1. Save input data to DB
+    // Save user input details
     const inputDetails = await prisma.userInputDetails.create({
       data: {
         height,
@@ -72,18 +67,15 @@ export const getAllInputDetailsOfUser = async (
         activityType,
         preferences,
         healthIssues,
-        mealPlan: mealPlan || "balanced", // Provide default value
-       
-        startDate: startDate ? new Date(startDate) : new Date(),
-        endDate: endDate
-          ? new Date(endDate)
-          : new Date(Date.now() + 15 * 24 * 60 * 60 * 1000), // 15 days from now
+        mealPlan: mealPlan || "balanced",
+        startDate: start,
+        endDate: end,
         cycleNumber: cycleNumber || 1,
         user: { connect: { id: userId } },
       },
     });
 
-    // 2. Prepare payload for FastAPI
+    // Payload to FastAPI
     const fastApiPayload = {
       gender: gender.toLowerCase() === "male" ? 1 : 0,
       age,
@@ -98,14 +90,21 @@ export const getAllInputDetailsOfUser = async (
       activity_type: activityType.toLowerCase(),
     };
 
-    // 3. Send POST to Python model (FastAPI)
     const pythonResponse = await axios.post(
       "http://localhost:8000/recommend",
       fastApiPayload
     );
+
     const { bmr, tdee, bmi, calorie_target, diet_plan } = pythonResponse.data;
 
-    // 4. Save predicted diet to PredictedDetails
+    // 🧠 Calculate expected weight
+    const days = 15;
+    const calorie_diff_per_day = calorie_target - tdee;
+    const total_calorie_change = calorie_diff_per_day * days;
+    const weight_change_kg = total_calorie_change / 7700;
+    const expected_weight = parseFloat((weight + weight_change_kg).toFixed(2));
+
+    // Save prediction and meals
     if (diet_plan?.length > 0) {
       await prisma.predictedDetails.create({
         data: {
@@ -113,6 +112,8 @@ export const getAllInputDetailsOfUser = async (
           tdee,
           bmi,
           calorie_target,
+          expectedWeight: expected_weight,
+          weightChange: parseFloat(weight_change_kg.toFixed(2)),
           user: { connect: { id: userId } },
           inputDetail: { connect: { id: inputDetails.id } },
           meals: {
@@ -125,7 +126,7 @@ export const getAllInputDetailsOfUser = async (
               calories: item["Calories (kcal)"] || 0,
               protein: item["Protein (g)"] || 0,
               carbs: item["Carbs (g)"] || 0,
-              fat: item["Fat (g)"] || 0, // Fixed: changed from 'fats' to 'fat'
+              fat: item["Fat (g)"] || 0,
               sodium: item["Sodium (mg)"] || 0,
               fiber: item["Fiber (g)"] || 0,
               sugar: item["Sugar (g)"] || 0,
@@ -138,40 +139,30 @@ export const getAllInputDetailsOfUser = async (
         },
       });
 
-      try {
-        console.log("=== CREATING DIET PLAN NOTIFICATION ===");
-        await createNotification({
-          userId: userId,
-          type: "DIET_PLAN_GENERATED",
-          title: "New Diet Plan Ready! 🍽️",
-          message: `Your personalized ${goal.toLowerCase()} diet plan has been generated with ${
-            diet_plan.length
-          } meals! Target: ${calorie_target} calories. Check it out and start your healthy eating journey!`,
-        });
-        console.log("✅ Diet plan notification created successfully!");
-      } catch (notificationError) {
-        console.error(
-          "❌ Failed to create diet plan notification:",
-          notificationError
-        );
-        // Don't fail the whole process if notification fails
-      }
+      // Send notification
+      await createNotification({
+        userId,
+        type: "DIET_PLAN_GENERATED",
+        title: "New Diet Plan Ready! 🍽️",
+        message: `Your personalized ${goal.toLowerCase()} diet plan has been generated with ${
+          diet_plan.length
+        } meals! 🎯 Target: ${calorie_target} kcal/day.\n📉 Expected weight after 15 days: ${expected_weight} kg.`,
+      });
     }
 
-    const responseData = {
+    res.status(200).json({
       message: "Input and prediction saved successfully",
-      userId: userId, // Add userId to response
+      userId,
       inputDetails,
       bmr,
       tdee,
       bmi,
       calorie_target,
-    };
-
-    console.log("Sending response:", responseData); // Debug log
-    res.status(200).json(responseData);
+      expected_weight,
+      weight_change_kg: parseFloat(weight_change_kg.toFixed(2)),
+    });
   } catch (error) {
-    console.error("Error in user input processing:", error);
+    console.error("Error in getAllInputDetailsOfUser:", error);
     res.status(500).json({ message: "Server error" });
   }
 };

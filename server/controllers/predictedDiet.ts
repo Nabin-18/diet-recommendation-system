@@ -8,16 +8,9 @@ interface AuthenticatedRequest extends Request {
   };
 }
 
-// Utility function to calculate expected weight
-const calculateExpectedWeight = (
-  currentWeight: number,
-  goal: string
-): number => {
-  if (goal === "weight loss") return currentWeight - 2;
-  if (goal === "weight gain") return currentWeight + 2;
-  return currentWeight; 
-};
 
+
+// Save prediction handler
 export const savePrediction = async (
   req: AuthenticatedRequest,
   res: Response
@@ -31,7 +24,6 @@ export const savePrediction = async (
       return;
     }
 
-    // Get user input to determine goal and weight
     const inputDetail = await prisma.userInputDetails.findUnique({
       where: { id: inputId },
     });
@@ -41,8 +33,7 @@ export const savePrediction = async (
       return;
     }
 
-    const expectedWeight = calculateExpectedWeight(inputDetail.weight, inputDetail.goal);
-    console.log(expectedWeight)
+   
 
     const prediction = await prisma.predictedDetails.create({
       data: {
@@ -50,7 +41,7 @@ export const savePrediction = async (
         tdee,
         bmi,
         calorie_target,
-        expectedWeight,
+        
         user: { connect: { id: userId } },
         inputDetail: { connect: { id: inputId } },
         meals: {
@@ -72,9 +63,7 @@ export const savePrediction = async (
           })),
         },
       },
-      include: {
-        meals: true,
-      },
+      include: { meals: true },
     });
 
     res.status(200).json({
@@ -83,12 +72,11 @@ export const savePrediction = async (
     });
   } catch (error) {
     console.error("Prediction save error:", error);
-    res.status(500).json({
-      message: "Internal Server Error",
-    });
+    res.status(500).json({ message: "Internal Server Error" });
   }
 };
 
+// Get latest predictions
 export const getPredictedDetails = async (
   req: AuthenticatedRequest,
   res: Response
@@ -118,6 +106,7 @@ export const getPredictedDetails = async (
   }
 };
 
+// Get latest diet plan
 export const getLatestDietPlan = async (
   req: AuthenticatedRequest,
   res: Response

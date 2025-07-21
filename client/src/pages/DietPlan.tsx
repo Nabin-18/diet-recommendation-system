@@ -110,6 +110,7 @@ const DietPlan: React.FC = () => {
             },
           };
           setDietData(convertedData);
+          
         } else {
           setDietData(null);
         }
