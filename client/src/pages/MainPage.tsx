@@ -3,12 +3,10 @@ import { Button } from "@/components/ui/button";
 import {
   Bell,
   User,
-  // MessageCircle,
   Utensils,
   NotebookPen,
   Activity,
   LogOut,
-  // Settings,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 
@@ -25,12 +23,6 @@ interface Notification {
 }
 
 const MainPage = () => {
-  const [notifications] = useState({
-    userInput: 0,
-    profile: 0,
-    virtualDoctor: 0,
-  });
-
   const [notificationCount, setNotificationCount] = useState(0);
 
   const fetchUnreadNotificationCount = async () => {
@@ -47,7 +39,7 @@ const MainPage = () => {
 
       if (response.ok) {
         const notifications: Notification[] = await response.json();
-        const unreadCount = notifications.filter((n: Notification) => !n.read).length;
+        const unreadCount = notifications.filter((n) => !n.read).length;
         setNotificationCount(unreadCount);
       }
     } catch (error) {
@@ -55,13 +47,9 @@ const MainPage = () => {
     }
   };
 
-  // Fetch notification count on component mount
   useEffect(() => {
     fetchUnreadNotificationCount();
-
-    // Optional: Set up interval to refresh count every 30 seconds
     const interval = setInterval(fetchUnreadNotificationCount, 30000);
-
     return () => clearInterval(interval);
   }, []);
 
@@ -71,7 +59,6 @@ const MainPage = () => {
       label: "User Input",
       icon: <Utensils className="w-5 h-5" />,
       gradient: "from-emerald-500 to-teal-600",
-      notifications: notifications.userInput,
       description: "Personalized nutrition",
     },
     {
@@ -79,25 +66,29 @@ const MainPage = () => {
       label: "Diet Plan",
       icon: <NotebookPen className="w-5 h-5" />,
       gradient: "from-blue-500 to-indigo-600",
-      notifications: notifications.profile,
       description: "Your personalized diet plan",
     },
-
     {
       to: "notification",
       label: "Notification",
       icon: <Bell className="w-5 h-5" />,
       gradient: "from-orange-500 to-red-600",
-      notifications: notificationCount,
       description: "View all notifications",
+      notifications: notificationCount,
     },
     {
       to: "profile",
       label: "Profile",
       icon: <User className="w-5 h-5" />,
       gradient: "from-blue-500 to-indigo-600",
-      notifications: notifications.profile,
       description: "Health metrics",
+    },
+    {
+      to: "history",
+      label: "History",
+      icon: <Activity className="w-5 h-5" />,
+      gradient: "from-purple-500 to-pink-600",
+      description: "Your diet history",
     },
   ];
 
@@ -108,7 +99,7 @@ const MainPage = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
-      {/* mobile Navigation */}
+      {/* Mobile Navigation */}
       <div className="flex lg:hidden bg-white border-b sticky top-0 z-50 shadow-sm">
         <div className="flex justify-between sm:justify-around items-center p-4 px-6 sm:px-4 w-full">
           {navItems.map((item) => (
@@ -116,9 +107,9 @@ const MainPage = () => {
               <div
                 className={`p-3 rounded-xl bg-gradient-to-r ${item.gradient} text-white shadow-md hover:shadow-lg transition-shadow duration-200`}>
                 {item.icon}
-                {item.notifications > 0 && item.to === "notification" && (
+                {item.to === "notification" && notificationCount > 0 && (
                   <div className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-semibold">
-                    {item.notifications > 9 ? "9+" : item.notifications}
+                    {notificationCount > 9 ? "9+" : notificationCount}
                   </div>
                 )}
               </div>
@@ -132,17 +123,15 @@ const MainPage = () => {
         </div>
       </div>
 
-      {/* mobile Content */}
+      {/* Mobile Content */}
       <div className="block lg:hidden p-4">
         <Outlet />
       </div>
 
-      {/* desktop Layout */}
+      {/* Desktop Layout */}
       <div className="hidden lg:flex h-screen">
-        {/* sidebar */}
+        {/* Sidebar */}
         <div className="w-80 bg-white border-r shadow-lg flex flex-col">
-          {/* Header */}
-          {/* when click on header naviage to main-page */}
           <Link to={"/main-page"}>
             <div className="p-6 border-b bg-gradient-to-r from-slate-50 to-blue-50 flex-shrink-0">
               <div className="flex items-center gap-3">
@@ -150,9 +139,7 @@ const MainPage = () => {
                   <Activity className="w-6 h-6 text-white" />
                 </div>
                 <div>
-                  <h1 className="text-xl font-bold text-slate-800">
-                    Diet Dashboard
-                  </h1>
+                  <h1 className="text-xl font-bold text-slate-800">Diet Dashboard</h1>
                   <p className="text-sm text-slate-600">Manage your wellness</p>
                 </div>
               </div>
@@ -172,18 +159,13 @@ const MainPage = () => {
                           {item.icon}
                         </div>
                         <div className="text-left">
-                          <h3 className="font-semibold text-slate-800">
-                            {item.label}
-                          </h3>
-                          <p className="text-xs text-slate-500">
-                            {item.description}
-                          </p>
+                          <h3 className="font-semibold text-slate-800">{item.label}</h3>
+                          <p className="text-xs text-slate-500">{item.description}</p>
                         </div>
                       </div>
-
-                      {item.notifications > 0 && item.to === "notification" && (
+                      {item.to === "notification" && notificationCount > 0 && (
                         <div className="bg-red-500 text-white text-sm rounded-full w-6 h-6 flex items-center justify-center font-semibold">
-                          {item.notifications > 9 ? "9+" : item.notifications}
+                          {notificationCount > 9 ? "9+" : notificationCount}
                         </div>
                       )}
                     </div>
@@ -193,7 +175,7 @@ const MainPage = () => {
             ))}
           </div>
 
-          {/* log out */}
+          {/* Logout Button */}
           <div className="p-6 flex-shrink-0">
             <Button
               onClick={handleLogout}
@@ -207,7 +189,7 @@ const MainPage = () => {
           </div>
         </div>
 
-        {/* Main Content Area */}
+        {/* Main Content */}
         <div className="flex-1 bg-gradient-to-br from-gray-50 via-slate-50 to-blue-50 overflow-hidden">
           <div className="h-full p-6 overflow-auto">
             <div className="bg-white rounded-xl shadow-sm border min-h-full p-6">
