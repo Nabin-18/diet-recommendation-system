@@ -17,7 +17,6 @@ import type { DashboardData } from "@/types";
 import FormField from "@/components/FormField";
 import FormSelect from "@/components/FormSelect";
 
-
 //options for form
 const GENDER_OPTIONS = [
   { value: "male", label: "Male" },
@@ -95,14 +94,16 @@ const dietFormInputSchema = z.object({
   healthIssues: z.enum(["asthama", "hypertension", "diabetes", "normal"], {
     required_error: "Please select your health condition",
   }),
-  mealPlan: z.enum(["general", "breakfast", "lunch", "dinner"], {
-    required_error: "Please select meal type",
-  }),
+  mealPlan: z.enum(["general", "breakfast", "lunch", "dinner"]).optional(),
   mealFrequency: z
     .number()
     .int()
     .min(1, "Meal frequency must be between 1 and 4")
-    .max(4, "Meal frequency must be between 1 and 4"),
+    .max(4, "Meal frequency must be between 1 and 4")
+    .optional(),
+  startDate: z.string().optional(),
+  endDate: z.string().optional(),
+  cycleNumber: z.number().optional(),
 });
 
 // processed schematransformations for api
@@ -140,7 +141,7 @@ interface Props {
   onRefresh?: () => void;
 }
 
-const DietRecommended: React.FC<Props> = ({
+const UserInput: React.FC<Props> = ({
   dashboardData,
   loading: externalLoading,
   error: externalError,
@@ -252,15 +253,33 @@ const DietRecommended: React.FC<Props> = ({
     try {
       const data = dietFormSchema.parse(inputData);
 
+      // Add default values for backend required fields
+      const submitData = {
+        ...data,
+        mealPlan: data.mealPlan || "general",
+        mealFrequency: data.mealFrequency || 3,
+        startDate: data.startDate || new Date().toISOString(),
+        endDate:
+          data.endDate ||
+          new Date(Date.now() + 15 * 24 * 60 * 60 * 1000).toISOString(),
+        cycleNumber: data.cycleNumber || 1,
+      };
+
       const response = await axios.post(
         "http://localhost:5000/api/user/user-input",
-        data,
+        submitData,
         {
           headers: { Authorization: `Bearer ${token}` },
         }
       );
 
+      console.log("Server response:", response.data); // Debug log
+
       if (!response.data?.userId) {
+        console.error(
+          "Missing userId in response. Full response:",
+          response.data
+        );
         throw new Error("Server response incomplete - missing user ID");
       }
 
@@ -268,7 +287,9 @@ const DietRecommended: React.FC<Props> = ({
         "http://localhost:5000/api/latest-prediction",
         { headers: { Authorization: `Bearer ${token}` } }
       );
+     
       const { latestPrediction, latestUserInput } = latestRes.data;
+    
 
       const dietPlanData = {
         userInput: latestUserInput,
@@ -329,7 +350,8 @@ const DietRecommended: React.FC<Props> = ({
           {onRefresh && (
             <button
               onClick={onRefresh}
-              className="mt-2 mx-auto block text-red-600 underline hover:text-red-800">
+              className="mt-2 mx-auto block text-red-600 underline hover:text-red-800"
+            >
               Try Again
             </button>
           )}
@@ -493,7 +515,8 @@ const DietRecommended: React.FC<Props> = ({
                     <Select
                       onValueChange={field.onChange}
                       value={field.value ?? ""}
-                      disabled={isFormLoading}>
+                      disabled={isFormLoading}
+                    >
                       <SelectTrigger className="rounded-[8px]">
                         <SelectValue placeholder="Meal Type Focus" />
                       </SelectTrigger>
@@ -525,7 +548,8 @@ const DietRecommended: React.FC<Props> = ({
                     <Select
                       onValueChange={(val) => field.onChange(Number(val))}
                       value={field.value?.toString() || ""}
-                      disabled={isFormLoading}>
+                      disabled={isFormLoading}
+                    >
                       <SelectTrigger className="rounded-[8px]">
                         <SelectValue placeholder="Meals Per Day" />
                       </SelectTrigger>
@@ -550,7 +574,8 @@ const DietRecommended: React.FC<Props> = ({
               <Button
                 type="submit"
                 className="px-8 py-2 rounded-[8px] font-semibold"
-                disabled={isFormLoading}>
+                disabled={isFormLoading}
+              >
                 {isFormLoading ? "Generating..." : "Get My Diet Plan"}
               </Button>
 
@@ -559,7 +584,8 @@ const DietRecommended: React.FC<Props> = ({
                 variant="outline"
                 onClick={handleReset}
                 className="px-8 py-2 rounded-[8px] font-semibold"
-                disabled={isFormLoading}>
+                disabled={isFormLoading}
+              >
                 Reset Form
               </Button>
             </div>
@@ -587,4 +613,4 @@ const DietRecommended: React.FC<Props> = ({
   );
 };
 
-export default DietRecommended;
+export default UserInput;

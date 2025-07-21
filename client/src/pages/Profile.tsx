@@ -3,7 +3,7 @@ import UserDetails from "./Dashboard/UserDetails";
 // import type { DashboardData } from "@/types";
 
 
-interface DashboardData {
+interface ProfileData {
   user: {
     name: string;
     email: string;  
@@ -36,15 +36,15 @@ interface DashboardData {
 }
 
 interface Props {
-  dashboardData: DashboardData | null;
+  profileData: ProfileData  | null;
   loading: boolean;
   onRefresh: () => void;
   error?: string | null;
 
 }
 
-const Dashboard: React.FC<Props> = ({
-  dashboardData,
+const Profile: React.FC<Props> = ({
+  profileData,
   loading,
   onRefresh,
   error,
@@ -73,10 +73,10 @@ const Dashboard: React.FC<Props> = ({
   }
 
   // no data state
-  if (!dashboardData) {
+  if (!profileData) {
     return (
       <div className="text-center mt-8">
-        <p className="text-gray-500 mb-4">No dashboard data available.</p>
+        <p className="text-gray-500 mb-4">No profile data available.</p>
         <button
           onClick={onRefresh}
           className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
@@ -90,10 +90,10 @@ const Dashboard: React.FC<Props> = ({
     <div className="max-w-4xl mx-auto p-4">
       {/* user details */}
       <div className="mb-6">
-        <UserDetails userData={dashboardData} />
+        <UserDetails userData={profileData} />
       </div>
     </div>
   );
 };
 
-export default Dashboard;
+export default Profile;

@@ -19,15 +19,16 @@ import MealCard from "@/components/MealCard";
 import InfoRow from "@/components/InfoRow";
 
 interface MealData {
-  Name: string;
+  name: string;
   calories: number;
   protein: number;
   carbs: number;
-  fats: number;
+  fat: number;
   fiber: number;
   sugar: number;
   sodium: number;
-  Instructions: string | string[];
+  instructions: string | string[];
+  optimized_ingredients: string[]; // Assuming this is an array of strings
   mealType?: string; // breakfast, lunch, dinner, snack
 }
 
@@ -73,7 +74,7 @@ const DietPlan: React.FC = () => {
         if (!token) {
           setDietData(null);
           setLoading(false);
-          navigate("/login");
+          navigate("/auth/login");
           return;
         }
         const res = await axios.get("/api/latest-prediction", {
@@ -109,6 +110,7 @@ const DietPlan: React.FC = () => {
             },
           };
           setDietData(convertedData);
+          
         } else {
           setDietData(null);
         }
@@ -161,13 +163,13 @@ RECOMMENDED MEALS:
 `;
 
     dietData.recommendations.meals.forEach((meal, index) => {
-      const cleanInstructions = getCleanInstructions(meal.Instructions);
+      const cleanInstructions = getCleanInstructions(meal.instructions);
       content += `
-${index + 1}. ${meal.Name.toUpperCase()}
+${index + 1}. ${meal.name.toUpperCase()}
 - Calories: ${meal.calories}
 - Protein: ${meal.protein}g
 - Carbs: ${meal.carbs}g
-- Fats: ${meal.fats}g
+- Fats: ${meal.fat}g
 - Fiber: ${meal.fiber}g
 - Sugar: ${meal.sugar}g
 - Sodium: ${meal.sodium}mg
@@ -213,35 +215,107 @@ ${cleanInstructions
     }
   };
 
-  const getCleanInstructions = (instructions: string | string[]): string[] => {
-    if (Array.isArray(instructions)) {
-      return instructions
-        .flat()
-        .map((step) => step.trim())
-        .filter(Boolean);
-    }
-    if (typeof instructions === "string") {
-      let str = instructions.trim();
-      try {
-        str = str.replace(/[\r\n\t]/g, " ");
-        if (str.startsWith("[") && str.endsWith("]")) {
-          const arr = JSON.parse(str.replace(/'/g, '"'));
-          if (Array.isArray(arr)) {
-            return arr
-              .map((step: string) => step.replace(/^\d+\.\s*/, "").trim())
-              .filter(Boolean);
-          }
+  // const getCleanInstructions = (instructions: string | string[]): string[] => {
+  //   if (Array.isArray(instructions)) {
+  //     return instructions
+  //       .map((step) => step.trim())
+  //       .filter(Boolean);
+  //   }
+  //   if (typeof instructions === "string") {
+  //     let str = instructions.trim();
+  //     try {
+  //       str = str.replace(/[\r\n\t]/g, " ");
+  //       if (str.startsWith("[") && str.endsWith("]")) {
+  //         const arr = JSON.parse(str.replace(/'/g, '"'));
+  //         if (Array.isArray(arr)) {
+  //           return arr
+  //             .map((step: string) => step.replace(/^\d+\.\s*/, "").trim())
+  //             .filter(Boolean);
+  //         }
+  //       }
+  //     } catch (error) {
+  //       console.error("Error parsing instructions:", error);
+  //     }
+  //     return str
+  //       .split(/(?=\d+\.\s)|[.!?]\s+/)
+  //       .map((step) => step.replace(/^\d+\.\s*/, "").trim())
+  //       .filter(Boolean);
+  //   }
+  //   return [];
+  // };
+
+
+const getCleanInstructions = (
+  instructions: string | string[] | Record<string, string | string[]> | null | undefined
+) => {
+  // Handle null/undefined
+  if (!instructions) return [];
+  
+  // If it's already a clean array of strings
+  if (Array.isArray(instructions) && instructions.every(item => typeof item === 'string')) {
+    return instructions
+      .map(step => step.trim())
+      .filter(Boolean);
+  }
+  
+  // If it's an object with numeric keys (like your DB format: {1: [...], 2: [...], etc.})
+  if (typeof instructions === 'object' && !Array.isArray(instructions)) {
+    const allSteps: string[] = [];
+    Object.keys(instructions)
+      .sort((a, b) => parseInt(a) - parseInt(b)) // Sort by numeric key
+      .forEach(key => {
+        const steps = instructions[key];
+        if (Array.isArray(steps)) {
+          allSteps.push(...steps);
+        } else if (typeof steps === 'string') {
+          allSteps.push(steps);
         }
-      } catch (error) {
-        console.error("Error parsing instructions:", error);
+      });
+    
+    return allSteps
+      .map(step => step.trim())
+      .filter(Boolean);
+  }
+  
+  // If it's a string representation of your data structure
+  if (typeof instructions === 'string') {
+    let str = instructions.trim();
+    
+    try {
+      // Clean up the string format and try to parse
+      str = str.replace(/[\r\n\t]/g, ' ');
+      
+      // Handle the format like "1. ['step1', 'step2', ...]"
+      const match = str.match(/^\d+\.\s*(\[.*\])$/);
+      if (match) {
+        const arrayStr = match[1].replace(/'/g, '"');
+        const arr = JSON.parse(arrayStr);
+        if (Array.isArray(arr)) {
+          return arr
+            .map(step => step.trim())
+            .filter(Boolean);
+        }
       }
-      return str
-        .split(/(?=\d+\.\s)|[.!?]\s+/)
-        .map((step) => step.replace(/^\d+\.\s*/, "").trim())
-        .filter(Boolean);
+      
+      // Try direct JSON parse (in case it's a clean JSON string)
+      const parsed = JSON.parse(str.replace(/'/g, '"'));
+      if (typeof parsed === 'object') {
+        return getCleanInstructions(parsed); // Recursive call to handle object format
+      }
+      
+    } catch {
+      console.warn('Could not parse instructions as JSON, falling back to text parsing');
     }
-    return [];
-  };
+    
+    // Fallback: split by sentence boundaries
+    return str
+      .split(/[.!?]\s+/)
+      .map(step => step.replace(/^\d+\.\s*/, '').trim())
+      .filter(Boolean);
+  }
+  
+  return [];
+}
 
   const getBMICategory = (bmi: number) => {
     if (bmi < 18.5)
@@ -442,13 +516,13 @@ ${cleanInstructions
                   {userInput.preferences}
                 </span>
               </div>
-              <div className="flex justify-between">
+              {/* <div className="flex justify-between">
                 <span className="text-gray-600">Meal Plan:</span>
                 <span className="font-medium">{userInput.mealPlan}</span>
-              </div>
+              </div> */}
               <div className="flex justify-between">
                 <span className="text-gray-600">Meals/Day:</span>
-                <span className="font-medium">{userInput.mealFrequency}</span>
+                <span className="font-medium">{recommendations.meals.length}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-600">Health Issues:</span>
@@ -467,7 +541,7 @@ ${cleanInstructions
               key={index}
               meal={meal}
               index={index}
-              instructions={getCleanInstructions(meal.Instructions)}
+              instructions={getCleanInstructions(meal.instructions)}
             />
           ))}
         </div>

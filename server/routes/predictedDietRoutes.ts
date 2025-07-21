@@ -8,4 +8,7 @@ router.post("/save-prediction",savePrediction)
 router.get("/prediction/:userId",authenticateToken,getPredictedDetails)
 router.get("/latest-prediction",authenticateToken,getLatestDietPlan)
 
+
+
+
 export default router

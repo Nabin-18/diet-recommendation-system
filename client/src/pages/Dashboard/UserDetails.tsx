@@ -168,13 +168,13 @@ const UserDetails: React.FC<Props> = ({ userData }) => {
                 <p className="font-medium text-gray-800">{inputDetails.preferences}</p>
               </div>
             </div>
-            <div className="flex items-center space-x-3">
+            {/* <div className="flex items-center space-x-3">
               <HiCalendar className="text-xl text-purple-500" />
               <div>
                 <p className="text-sm text-gray-500">Meal Frequency</p>
                 <p className="font-medium text-gray-800">{inputDetails.mealFrequency}</p>
               </div>
-            </div>
+            </div> */}
           </div>
         </div>
       </div>
