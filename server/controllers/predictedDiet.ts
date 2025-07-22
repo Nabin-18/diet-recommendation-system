@@ -30,15 +30,13 @@ export const savePrediction = async (
       data: { isCurrent: false }
     });
 
-    // 2. Mark all other UserInputDetails for this user as inactive
+    // 2. Mark all other UserInputDetails as inactive
     await prisma.userInputDetails.updateMany({
       where: {
         userId,
         NOT: { id: inputId },
       },
-      data: {
-        isActive: false,
-      },
+      data: { isActive: false },
     });
 
     // 3. Mark current UserInputDetails as active
@@ -50,36 +48,40 @@ export const savePrediction = async (
     // 4. Create new prediction with isCurrent = true
     const prediction = await prisma.predictedDetails.create({
       data: {
-        userId: userId,
+        userId,
         inputId: inputId,
-        bmr: bmr,
-        tdee: tdee,
-        bmi: bmi,
-        calorie_target: calorie_target,
+        bmr,
+        tdee,
+        bmi,
+        calorie_target,
         expectedWeight: expectedWeight,
-        weightChange: weightChange,
+        weightChange: parseFloat(weightChange.toFixed(2)),
         isCurrent: true,
-        meals: {
-          create: meals.map((meal: any) => ({
-            name: meal.name,
-            target_calories: meal.target_calories,
-            optimized_calories: meal.optimized_calories,
-            calories: meal.calories,
-            fat: meal.fat,
-            carbs: meal.carbs,
-            protein: meal.protein,
-            fiber: meal.fiber,
-            sugar: meal.sugar,
-            sodium: meal.sodium,
-            image: meal.image,
-            instructions: meal.instructions,
-            calorie_match_pct: meal.calorie_match_pct,
-            optimized_ingredients: meal.optimized_ingredients,
-          })),
-        },
+        meals: meals?.length > 0
+          ? {
+            create: meals.map((meal: any) => ({
+              name: meal.name || "Unknown Meal",
+              target_calories: meal.target_calories || meal["Calories (kcal)"] || 0,
+              optimized_calories: meal.optimized_calories || meal["Calories (kcal)"] || 0,
+              calories: meal["Calories (kcal)"] || 0,
+              protein: meal["Protein (g)"] || 0,
+              carbs: meal["Carbs (g)"] || 0,
+              fat: meal["Fat (g)"] || 0,
+              sodium: meal["Sodium (mg)"] || 0,
+              fiber: meal["Fiber (g)"] || 0,
+              sugar: meal["Sugar (g)"] || 0,
+              instructions: meal.instructions || "No instructions available",
+              image: meal.image || "No image available",
+              calorie_match_pct: meal.calorie_match_pct || 100,
+              optimized_ingredients: meal.optimized_ingredients || [],
+            })),
+          }
+          : undefined,
       },
       include: { meals: true },
     });
+
+    console.log("Created prediction:", prediction);
 
     res.status(200).json({
       message: "Prediction saved successfully",

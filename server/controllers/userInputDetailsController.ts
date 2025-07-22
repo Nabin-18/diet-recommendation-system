@@ -54,9 +54,9 @@ export const getAllInputDetailsOfUser = async (
     const start = startDate ? new Date(startDate) : new Date();
     const end = endDate
       ? new Date(endDate)
-      : new Date(Date.now() + 15 * 24 * 60 * 60 * 1000);
+      : new Date(Date.now() + 15 * 24 * 60 * 60 * 1000); // default +15 days
 
-    // Save user input details
+    // Save new user input
     const inputDetails = await prisma.userInputDetails.create({
       data: {
         height,
@@ -90,6 +90,7 @@ export const getAllInputDetailsOfUser = async (
       activity_type: activityType.toLowerCase(),
     };
 
+    // Fetch prediction from FastAPI
     const pythonResponse = await axios.post(
       "http://localhost:8000/recommend",
       fastApiPayload
@@ -97,58 +98,76 @@ export const getAllInputDetailsOfUser = async (
 
     const { bmr, tdee, bmi, calorie_target, diet_plan } = pythonResponse.data;
 
-    // 🧠 Calculate expected weight
+    // Calculate expected weight
     const days = 15;
     const calorie_diff_per_day = calorie_target - tdee;
     const total_calorie_change = calorie_diff_per_day * days;
     const weight_change_kg = total_calorie_change / 7700;
     const expected_weight = parseFloat((weight + weight_change_kg).toFixed(2));
 
-    // Save prediction and meals
-    if (diet_plan?.length > 0) {
-      await prisma.predictedDetails.create({
-        data: {
-          bmr,
-          tdee,
-          bmi,
-          calorie_target,
-          expectedWeight: expected_weight,
-          weightChange: parseFloat(weight_change_kg.toFixed(2)),
-          user: { connect: { id: userId } },
-          inputDetail: { connect: { id: inputDetails.id } },
-          meals: {
-            create: diet_plan.map((item: any) => ({
-              name: item.Name || "Unknown Meal",
-              target_calories:
-                item.target_calories || item["Calories (kcal)"] || 0,
-              optimized_calories:
-                item.optimized_calories || item["Calories (kcal)"] || 0,
-              calories: item["Calories (kcal)"] || 0,
-              protein: item["Protein (g)"] || 0,
-              carbs: item["Carbs (g)"] || 0,
-              fat: item["Fat (g)"] || 0,
-              sodium: item["Sodium (mg)"] || 0,
-              fiber: item["Fiber (g)"] || 0,
-              sugar: item["Sugar (g)"] || 0,
-              instructions: item.Instructions || "No instructions available",
-              image: item.Image || "No image available",
-              calorie_match_pct: item.calorie_match_pct || 100,
-              optimized_ingredients: item["Optimized Ingredients"] || [],
-            })),
-          },
-        },
-      });
+    // Deactivate all other inputs and predictions
+    await prisma.userInputDetails.updateMany({
+      where: { userId, NOT: { id: inputDetails.id } },
+      data: { isActive: false },
+    });
+    await prisma.predictedDetails.updateMany({
+      where: { userId, inputId: inputDetails.id },
+      data: { isCurrent: false },
+    });
 
-      // Send notification
-      await createNotification({
-        userId,
-        type: "DIET_PLAN_GENERATED",
-        title: "New Diet Plan Ready! 🍽️",
-        message: `Your personalized ${goal.toLowerCase()} diet plan has been generated with ${
-          diet_plan.length
-        } meals! 🎯 Target: ${calorie_target} kcal/day.\n📉 Expected weight after 15 days: ${expected_weight} kg.`,
-      });
+    // --- EXTRACT MEALS ARRAY ---
+    // FastAPI may return { diet_plan: { meals: [...] } } or { diet_plan: [...] }
+    let meals = [];
+    if (Array.isArray(diet_plan)) {
+      meals = diet_plan;
+    } else if (diet_plan && Array.isArray(diet_plan.meals)) {
+      meals = diet_plan.meals;
     }
+
+    // --- CREATE PREDICTION ---
+    await prisma.predictedDetails.create({
+      data: {
+        userId,
+        inputId: inputDetails.id,
+        bmr,
+        tdee,
+        bmi,
+        calorie_target,
+        expectedWeight: expected_weight,
+        weightChange: parseFloat(weight_change_kg.toFixed(2)),
+        isCurrent: true,
+        meals:
+          meals.length > 0
+            ? {
+              create: meals.map((item: any) => ({
+                name: item.Name || item.name || "Unknown Meal",
+                target_calories: item.target_calories || item["Calories (kcal)"] || 0,
+                optimized_calories: item.optimized_calories || item["Calories (kcal)"] || 0,
+                calories: item["Calories (kcal)"] || item.calories || 0,
+                protein: item["Protein (g)"] || item.protein || 0,
+                carbs: item["Carbs (g)"] || item.carbs || 0,
+                fat: item["Fat (g)"] || item.fat || 0,
+                sodium: item["Sodium (mg)"] || item.sodium || 0,
+                fiber: item["Fiber (g)"] || item.fiber || 0,
+                sugar: item["Sugar (g)"] || item.sugar || 0,
+                instructions: item.Instructions || item.instructions || "No instructions available",
+                image: item.Image || item.image || "No image available",
+                calorie_match_pct: item.calorie_match_pct || 100,
+                optimized_ingredients: item["Optimized Ingredients"] || item.optimized_ingredients || [],
+              })),
+            }
+            : undefined,
+      },
+    });
+
+    // Send notification to user
+    await createNotification({
+      userId,
+      type: "DIET_PLAN_GENERATED",
+      title: "New Diet Plan Ready! 🍽️",
+      message: `Your personalized ${goal.toLowerCase()} diet plan has been generated with ${diet_plan.length
+        } meals! 🎯 Target: ${calorie_target} kcal/day.\n📉 Expected weight after 15 days: ${expected_weight} kg.`,
+    });
 
     res.status(200).json({
       message: "Input and prediction saved successfully",
@@ -162,7 +181,7 @@ export const getAllInputDetailsOfUser = async (
       weight_change_kg: parseFloat(weight_change_kg.toFixed(2)),
     });
   } catch (error) {
-    console.error("Error in getAllInputDetailsOfUser:", error);
-    res.status(500).json({ message: "Server error" });
+    console.error("❌ Error in getAllInputDetailsOfUser:", error);
+    res.status(500).json({ message: "Server error", error: error });
   }
 };
