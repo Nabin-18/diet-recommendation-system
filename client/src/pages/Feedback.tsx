@@ -11,7 +11,11 @@ type FeedbackFormData = {
 const Feedback = () => {
   const { inputDetailId } = useParams();
   const navigate = useNavigate();
-  const { register, handleSubmit, formState: { errors } } = useForm<FeedbackFormData>();
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<FeedbackFormData>();
 
   const [submitted, setSubmitted] = useState(false);
   const [expectedWeight, setExpectedWeight] = useState<number | null>(null);
@@ -44,10 +48,11 @@ const Feedback = () => {
       setIsLoading(true);
       setError(null);
       const token = localStorage.getItem("token");
-      
+
       // Calculate if goal was achieved (with 0.5kg tolerance)
-      const achieved = expectedWeight !== null && 
-                      Math.abs(data.weightChange - expectedWeight) <= 0.5;
+      const achieved =
+        expectedWeight !== null &&
+        Math.abs(data.weightChange - expectedWeight) <= 0.5;
 
       await axios.post(
         "http://localhost:5000/api/feedback",
@@ -78,7 +83,7 @@ const Feedback = () => {
       setIsLoading(true);
       setError(null);
       const token = localStorage.getItem("token");
-      
+
       const res = await axios.post(
         "http://localhost:5000/api/feedback",
         {
@@ -89,7 +94,7 @@ const Feedback = () => {
           regenerate: true,
         },
         {
-          headers: { 
+          headers: {
             Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",
           },
@@ -100,11 +105,11 @@ const Feedback = () => {
         throw new Error("No diet data received");
       }
 
-      navigate("/main-page/diet-plan", { 
-        state: { 
+      navigate("/main-page/new-diet-plan", {
+        state: {
           dietPlanData: res.data.newDiet,
-          message: "New diet plan generated successfully" 
-        } 
+          message: "New diet plan generated successfully",
+        },
       });
     } catch (error) {
       console.error("Failed to regenerate diet", error);
@@ -132,9 +137,7 @@ const Feedback = () => {
       <h2 className="text-xl font-semibold mb-4">Progress Report</h2>
 
       {error && (
-        <div className="mb-4 p-3 bg-red-100 text-red-700 rounded">
-          {error}
-        </div>
+        <div className="mb-4 p-3 bg-red-100 text-red-700 rounded">{error}</div>
       )}
 
       {!submitted ? (
@@ -157,16 +160,20 @@ const Feedback = () => {
             <input
               type="number"
               step="0.1"
-              {...register("weightChange", { 
+              {...register("weightChange", {
                 required: "Current weight is required",
                 min: { value: 30, message: "Minimum weight is 30kg" },
-                max: { value: 300, message: "Maximum weight is 300kg" }
+                max: { value: 300, message: "Maximum weight is 300kg" },
               })}
-              className={`w-full p-2 border rounded ${errors.weightChange ? "border-red-500" : "border-gray-300"}`}
+              className={`w-full p-2 border rounded ${
+                errors.weightChange ? "border-red-500" : "border-gray-300"
+              }`}
               disabled={isLoading}
             />
             {errors.weightChange && (
-              <p className="mt-1 text-sm text-red-600">{errors.weightChange.message}</p>
+              <p className="mt-1 text-sm text-red-600">
+                {errors.weightChange.message}
+              </p>
             )}
           </div>
 
@@ -204,9 +211,7 @@ const Feedback = () => {
             <p className="text-lg font-medium text-green-800">
               Thank you for your feedback!
             </p>
-            <p className="mt-2">
-              Do you want to regenerate a new diet plan?
-            </p>
+            <p className="mt-2">Do you want to regenerate a new diet plan?</p>
           </div>
 
           <div className="flex justify-center space-x-4">

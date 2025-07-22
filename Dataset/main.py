@@ -26,9 +26,18 @@ class UserInput(BaseModel):
 def get_diet_plan(user_input: UserInput):
     input_data = user_input.dict()
     exclude_list = input_data.pop("exclude_recipe_names", [])
-    
-    plan = suggest_diet(input_data, recipe, exclude_recipe_names=exclude_list)
-    
-    if not plan or not plan.get("diet_plan"):
-        return {"message": "No suitable diet plan found."}
-    return plan
+    try:
+        plan = suggest_diet(input_data, recipe, exclude_recipe_names=exclude_list)
+        # Always return a consistent structure
+        # If plan is None or doesn't have 'diet_plan', return empty meals
+        if not plan or not plan.get("diet_plan"):
+            return {"diet_plan": {"meals": []}, "message": "No suitable diet plan found."}
+        # If plan['diet_plan'] is a list (old style), wrap it
+        if isinstance(plan["diet_plan"], list):
+            plan["diet_plan"] = {"meals": plan["diet_plan"]}
+        # If meals is missing or not a list, set to []
+        if "meals" not in plan["diet_plan"] or not isinstance(plan["diet_plan"]["meals"], list):
+            plan["diet_plan"]["meals"] = []
+        return plan
+    except Exception as e:
+        return {"diet_plan": {"meals": []}, "message": f"Error: {str(e)}"}

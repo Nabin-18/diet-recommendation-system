@@ -13,6 +13,7 @@ import NotificationComponent from "@/pages/NotificationComponent";
 import WelcomePage from "@/pages/WelcomePage";
 import Profile from "@/pages/Profile";
 import Feedback from "@/pages/Feedback";
+import NewDiet from "@/pages/NewDiet";
 
 const AppRoutes = () => {
   const [data, setData] = useState<DashboardData | null>(null);
@@ -106,6 +107,7 @@ const AppRoutes = () => {
         <Route path="history" element={<History />} />
         {/* Add the DietPlan route */}
         <Route path="diet-plan" element={<DietPlan />} />
+        <Route path="new-diet-plan" element={<NewDiet />} />
 
         <Route path="feedback-form/:inputDetailId" element={<Feedback />} />
       </Route>
