@@ -17,17 +17,18 @@ export const savePrediction = async (
 ): Promise<void> => {
   try {
     const userId = req.user?.id;
-    const { inputId, meals, bmr, tdee, bmi, calorie_target } = req.body;
+    const { inputId, meals, bmr, tdee, bmi, calorie_target, expectedWeight, weightChange } = req.body;
 
     if (!userId || !inputId) {
       res.status(400).json({ message: "Missing userId or inputId" });
       return;
     }
 
-    // 1. Mark all previous predictions as not current
+    // 1. Mark previous predictions for this user and input as not current
     await prisma.predictedDetails.updateMany({
       where: {
         userId,
+        inputId,
         isCurrent: true,
       },
       data: {
@@ -35,17 +36,35 @@ export const savePrediction = async (
       },
     });
 
-    // 2. Create new prediction
+    // 2. Mark all other UserInputDetails for this user as inactive
+    await prisma.userInputDetails.updateMany({
+      where: {
+        userId,
+        NOT: { id: inputId },
+      },
+      data: {
+        isActive: false,
+      },
+    });
+
+    // 3. Mark current UserInputDetails as active
+    await prisma.userInputDetails.update({
+      where: { id: inputId },
+      data: { isActive: true },
+    });
+
+    // 4. Create new prediction with isCurrent = true
     const prediction = await prisma.predictedDetails.create({
       data: {
         bmr,
         tdee,
         bmi,
         calorie_target,
-        
+        expectedWeight,
+        weightChange,
+        isCurrent: true,
         user: { connect: { id: userId } },
         inputDetail: { connect: { id: inputId } },
-        isCurrent: true,
         meals: {
           create: meals.map((meal: any) => ({
             name: meal.name,
@@ -111,7 +130,7 @@ export const getPredictedDetails = async (
 };
 
 // -------------------------------------------
-// Fetch latest diet plan (prediction + input)
+// Fetch latest active diet plan (active input + current prediction)
 // -------------------------------------------
 export const getLatestDietPlan = async (
   req: AuthenticatedRequest,
@@ -124,8 +143,25 @@ export const getLatestDietPlan = async (
   }
 
   try {
+    // Find the active UserInputDetails for this user
+    const activeInput = await prisma.userInputDetails.findFirst({
+      where: {
+        userId,
+        isActive: true,
+      },
+    });
+
+    if (!activeInput) {
+      return res.status(404).json({ message: "No active diet input found" });
+    }
+
+    // Find current prediction for that active input
     const latestPrediction = await prisma.predictedDetails.findFirst({
-      where: { userId, isCurrent: true },
+      where: {
+        userId,
+        inputId: activeInput.id,
+        isCurrent: true,
+      },
       orderBy: { predictionDate: "desc" },
       include: {
         meals: true,
@@ -133,18 +169,13 @@ export const getLatestDietPlan = async (
       },
     });
 
-    const latestUserInput = await prisma.userInputDetails.findFirst({
-      where: { userId },
-      orderBy: { createdAt: "desc" },
-    });
-
-    if (!latestPrediction || !latestUserInput) {
-      return res.status(404).json({ message: "No diet plan found" });
+    if (!latestPrediction) {
+      return res.status(404).json({ message: "No current prediction found" });
     }
 
     res.status(200).json({
       latestPrediction,
-      latestUserInput,
+      latestUserInput: activeInput,
     });
   } catch (error) {
     console.error("❌ Error fetching latest diet plan:", error);

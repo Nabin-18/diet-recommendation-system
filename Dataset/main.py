@@ -5,23 +5,22 @@ import pandas as pd
 
 from recommend import suggest_diet
 
-# Load recipe data
+# Load recipe data once
 recipe = pd.read_csv("cleaned_recipes.csv")
 
 app = FastAPI()
 
 class UserInput(BaseModel):
-    gender: int  # 0 for female, 1 for male
+    gender: int  # 0 female, 1 male
     age: int
     height_cm: float
     weight_kg: float
     goal: str
-    Type: str
+    Type: str  # vegetarian/non-vegetarian etc.
     meal_type: str
     health_conditions: List[str]
     activity_type: str
-    
-    exclude_recipe_names: Optional[List[str]] = []  # Optional list to exclude recipes
+    exclude_recipe_names: Optional[List[str]] = []  # optional to exclude recipes
 
 @app.post("/recommend")
 def get_diet_plan(user_input: UserInput):

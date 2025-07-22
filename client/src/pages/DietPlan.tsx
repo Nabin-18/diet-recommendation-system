@@ -188,63 +188,6 @@ const DietPlan: React.FC = () => {
   useEffect(() => {
     const state = location.state as { dietPlanData?: DietPlanData };
 
-<<<<<<< HEAD
-    async function fetchLatestPlan() {
-      try {
-        const token = localStorage.getItem("token");
-        if (!token) {
-          setDietData(null);
-          setLoading(false);
-          navigate("/auth/login");
-          return;
-        }
-        const res = await axios.get("/api/latest-prediction", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        const { latestPrediction, latestUserInput } = res.data;
-        if (latestPrediction && latestUserInput) {
-          const convertedData: DietPlanData = {
-            userInput: {
-              height: latestUserInput.height,
-              weight: latestUserInput.weight,
-              age: latestUserInput.age,
-              gender: latestUserInput.gender,
-              goal: latestUserInput.goal,
-              activityType: latestUserInput.activityType,
-              preferences: latestUserInput.preferences,
-              healthIssues: latestUserInput.healthIssues,
-              mealPlan: latestUserInput.mealPlan,
-              mealFrequency: latestUserInput.mealFrequency,
-            },
-            recommendations: {
-              bmi: latestPrediction.bmi,
-              bmr: latestPrediction.bmr,
-              tdee: latestPrediction.tdee,
-              calorie_target: latestPrediction.calorie_target,
-              meals: Array.isArray(latestPrediction.meals)
-                ? latestPrediction.meals
-                : [],
-            },
-            metadata: {
-              formSubmittedAt:
-                latestPrediction.predictionDate || new Date().toISOString(),
-            },
-          };
-          setDietData(convertedData);
-          
-        } else {
-          setDietData(null);
-        }
-      } catch (e) {
-        console.error("Error fetching latest diet plan:", e);
-        setDietData(null);
-      } finally {
-        setLoading(false);
-      }
-    }
-
-=======
->>>>>>> newdiet
     if (state?.dietPlanData) {
       // Normalize instructions for passed-in data
       const normalizedData = {
