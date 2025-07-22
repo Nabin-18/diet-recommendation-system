@@ -2,15 +2,16 @@ import requests
 import json  # For pretty printing JSON
 
 user_input = {
-    'gender': 0,  # 1 for male, 0 for female
-    'age': 20,
-    'height_cm': 150,
-    'weight_kg': 50,
-    'goal': 'weight_gain',  # e.g. 'weight_loss', 'muscle_gain', 'maintenance'
-    'Type': 'vegetarian',
-    'meal_type': 'general',
-    'health_conditions': ['hypertension'],  # e.g. ['diabetes', 'hypertension'],
-    'activity_type': 'yoga'
+  "gender": 1,
+  "age": 30,
+  "height_cm": 170,
+  "weight_kg": 70,
+  "goal": "weight_loss",
+  "Type": "vegetarian",
+  "meal_type": "dinner",
+  "health_conditions": ["asthma"],
+  "activity_type": "yoga",
+  "exclude_recipe_names": []
 }
 
 try:

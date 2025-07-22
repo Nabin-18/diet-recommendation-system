@@ -9,27 +9,28 @@ datasource db {
 }
 
 model User {
-  id               Int                @id @default(autoincrement())
-  name             String
-  email            String             @unique
-  password         String
-  createdAt        DateTime           @default(now())
-  updatedAt        DateTime           @updatedAt
-  resetOtp         String?
-  resetOtpExpiry   DateTime?
-  dob              DateTime?
-  gender           String
-  image            String?
-  currentWeight    Float?
-  lastWeightUpdate DateTime?
-  Feedbacks        Feedback[]
-  Notifications    Notification[]
-  PredictedDetails PredictedDetails[]
-  UserInputDetails UserInputDetails[]
+  id                   Int                @id @default(autoincrement())
+  name                 String
+  email                String             @unique
+  password             String
+  createdAt            DateTime           @default(now())
+  updatedAt            DateTime           @updatedAt
+  resetOtp             String?
+  resetOtpExpiry       DateTime?
+  dob                  DateTime?
+  gender               String
+  image                String?
+  currentWeight        Float?
+  lastWeightUpdate     DateTime?
+  lastWeightReminderAt DateTime? // New field added
+  Feedbacks            Feedback[]
+  Notifications        Notification[]
+  PredictedDetails     PredictedDetails[]
+  UserInputDetails     UserInputDetails[]
 }
 
 model UserInputDetails {
-  id               Int               @id @default(autoincrement())
+  id               Int                @id @default(autoincrement())
   height           Int
   weight           Int
   age              Int
@@ -38,18 +39,18 @@ model UserInputDetails {
   activityType     String
   preferences      String
   healthIssues     String
-  mealPlan         String?           @default("balanced")
+  mealPlan         String?            @default("balanced")
   userId           Int
-  createdAt        DateTime          @default(now())
-  updatedAt        DateTime          @updatedAt
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
   cycleNumber      Int?
   endDate          DateTime
   startDate        DateTime
-  isActive         Boolean           @default(true)
+  isActive         Boolean            @default(true)
   feedback         Feedback?
-  predictedDetails PredictedDetails?
-  user             User              @relation(fields: [userId], references: [id], onDelete: Cascade)
-  notifications    Notification[]    @relation("InputDetailNotifications")
+  predictedDetails PredictedDetails[] // Changed to array
+  user             User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  notifications    Notification[]     @relation("InputDetailNotifications")
 }
 
 model PredictedDetails {
@@ -58,6 +59,7 @@ model PredictedDetails {
   createdAt      DateTime         @default(now())
   updatedAt      DateTime         @updatedAt
   userId         Int
+  inputId        Int // 🔁 removed @unique to allow multiple predictions per input
   bmi            Float?
   bmr            Float?
   calorie_target Float?
@@ -71,15 +73,14 @@ model PredictedDetails {
   fats           Float?
   fiber          Float?
   image          String?
-  inputId        Int              @unique
   protein        Float?
   sodium         Float?
   sugar          Float?
+  isCurrent      Boolean          @default(true)
   meals          MealPrediction[]
   inputDetail    UserInputDetails @relation(fields: [inputId], references: [id], onDelete: Cascade)
   user           User             @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
-
 
 model MealPrediction {
   id                    Int              @id @default(autoincrement())
