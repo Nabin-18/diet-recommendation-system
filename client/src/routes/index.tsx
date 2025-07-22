@@ -5,7 +5,7 @@ import Login from "@/pages/Login";
 import Signup from "@/pages/Signup";
 import MainPage from "@/pages/MainPage";
 import UserInput from "@/pages/UserInput";
-import ChatBot from "@/pages/chatbot/ChatBot";
+import History from "@/pages/History";
 import DietPlan from "@/pages/DietPlan";
 import axios from "axios";
 import type { DashboardData } from "@/types";
@@ -103,7 +103,7 @@ const AppRoutes = () => {
           }
         />
         <Route path="notification" element={<NotificationComponent />} />
-        <Route path="chat-bot" element={<ChatBot />} />
+        <Route path="history" element={<History />} />
         {/* Add the DietPlan route */}
         <Route path="diet-plan" element={<DietPlan />} />
 

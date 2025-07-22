@@ -45,6 +45,7 @@ model UserInputDetails {
   cycleNumber      Int?
   endDate          DateTime
   startDate        DateTime
+  isActive         Boolean           @default(true)
   feedback         Feedback?
   predictedDetails PredictedDetails?
   user             User              @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -62,7 +63,7 @@ model PredictedDetails {
   calorie_target Float?
   tdee           Float?
   expectedWeight Float?
-  weightChange   Float?           
+  weightChange   Float?
   Instructions   String?
   Name           String?
   calories       Float?

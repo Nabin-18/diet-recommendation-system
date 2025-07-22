@@ -506,7 +506,8 @@ def inject_quantities_into_instructions(instructions, quantities):
 # -------------------------------------------
 # Main Function with Accuracy Constraints
 # -------------------------------------------
-def suggest_diet(user_input: dict, recipe_df: pd.DataFrame, max_meals: int = 5, tolerance: float = 0.05):
+def suggest_diet(user_input: dict, recipe_df: pd.DataFrame, max_meals: int = 5, tolerance: float = 0.05, exclude_recipe_names: list = None):
+
     """
     Main function that suggests optimized diet plan with accuracy constraints (95-105%)
     """
@@ -519,6 +520,9 @@ def suggest_diet(user_input: dict, recipe_df: pd.DataFrame, max_meals: int = 5, 
     # ---------------- Filters ----------------
     df = df[df['Type'].str.lower() == user_input['Type'].lower()]
     df = df[df['MealType'].str.lower() == user_input['meal_type'].lower()]
+
+    if exclude_recipe_names:
+        df = df[~df['Name'].isin(exclude_recipe_names)]
     
     # Apply health condition filters
     for cond in [c.lower() for c in user_input.get('health_conditions', [])]:
@@ -660,53 +664,7 @@ def suggest_diet(user_input: dict, recipe_df: pd.DataFrame, max_meals: int = 5, 
         "calorie_accuracy": round((kcal_sum / cal_target) * 100, 1) if cal_target > 0 else 0
     }
 
-# -------------------------------------------
-# Example Usage
-# -------------------------------------------
-# if __name__ == "__main__":
-   
-    
-#     user_input = {
-#         'gender': 1,  # 1 for male, 0 for female
-#         'age': 20,
-#         'height_cm': 170,
-#         'weight_kg': 50,
-#         'goal': 'weight_gain',  # e.g. 'weight_loss', 'weight_gain', 'maintain'
-#         'Type': 'non-vegetarian',
-#         'meal_type': 'general',
-#         'health_conditions': ['diabetes'],  # e.g. ['diabetes', 'hypertension'],
-#         'activity_type': 'hitt'
-#     }
 
-#     print("🔄 Generating optimized diet plan...")
-#     result = suggest_diet(user_input, recipe)
 
-#     print("\n" + "="*60)
-#     print("📊 DIET OPTIMIZATION RESULTS")
-#     print("="*60)
-#     print(f"🔥 BMR: {result['bmr']} kcal/day")
-#     print(f"📈 BMI: {result['bmi']}")
-#     print(f"⚡ TDEE: {result['tdee']} kcal/day")
-#     print(f"🎯 Calorie Target: {result['calorie_target']} kcal/day")
-    
-#     print(f"✅ Actual Calories: {result['actual_calories']} kcal/day")
-#     print(f"🎪 Accuracy: {result['calorie_accuracy']}%")
-#     print(f"🍽️ Number of meals: {len(result['diet_plan'])}")
-
-#     print("\n" + "="*60)
-#     print("🍽️ OPTIMIZED MEAL PLAN")
-#     print("="*60)
-
-#     for i, meal in enumerate(result['diet_plan'], 1):
-#         print(f"\n🥗 Meal {i}: {meal['Name']}")
-#         print(f"   Calories: {meal['Calories (kcal)']}")
-#         print(f"   🥩 Protein: {meal['Protein (g)']}g")
-#         print(f"   🧈 Fat: {meal['Fat (g)']}g") 
-#         print(f"   🍞 Carbs: {meal['Carbs (g)']}g")
-#         print(f"   🌾 Fiber: {meal['Fiber (g)']}g")
-#         print(f"   📝  Ingredients:")
-#         for ingredient in meal['Optimized Ingredients']:
-#             print(f"      • {ingredient}")
-#         print(f"   👨‍🍳 Instructions:")
-#         for line in meal['Instructions'].split('\n'):
-            # print(f"      {line}")
+#     
+#   
