@@ -29,23 +29,23 @@ model User {
 }
 
 model UserInputDetails {
-  id               Int               @id @default(autoincrement())
-  height           Int
-  weight           Int
-  age              Int
-  gender           String
-  goal             String
-  activityType     String
-  preferences      String
-  healthIssues     String
-  mealPlan         String?           @default("balanced")
-  userId           Int
-  createdAt        DateTime          @default(now())
-  updatedAt        DateTime          @updatedAt
-  cycleNumber      Int?
-  endDate          DateTime
-  startDate        DateTime
-  isActive         Boolean           @default(true)
+  id           Int      @id @default(autoincrement())
+  height       Int
+  weight       Int
+  age          Int
+  gender       String
+  goal         String
+  activityType String
+  preferences  String
+  healthIssues String
+  mealPlan     String?  @default("balanced")
+  userId       Int
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  cycleNumber  Int?
+  endDate      DateTime
+  startDate    DateTime
+
   feedback         Feedback?
   predictedDetails PredictedDetails?
   user             User              @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -75,11 +75,11 @@ model PredictedDetails {
   protein        Float?
   sodium         Float?
   sugar          Float?
+  isActive       Boolean          @default(true)
   meals          MealPrediction[]
   inputDetail    UserInputDetails @relation(fields: [inputId], references: [id], onDelete: Cascade)
   user           User             @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
-
 
 model MealPrediction {
   id                    Int              @id @default(autoincrement())

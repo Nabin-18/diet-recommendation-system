@@ -14,31 +14,6 @@ const Feedback = () => {
   const { register, handleSubmit } = useForm<FeedbackFormData>();
 
   const [submitted, setSubmitted] = useState(false);
-<<<<<<< HEAD
-  const [expectedWeight, setExpectedWeight] = useState<number | null>(null); 
-
-  // ✅ Fetch expected weight when component mounts
-  useEffect(() => {
-  const fetchExpectedWeight = async () => {
-    try {
-      const token = localStorage.getItem("token");
-       const res = await axios.get("/api/latest-prediction", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-
-      // Log response to debug:
-      console.log("Latest prediction response:", res.data);
-
-      setExpectedWeight(res.data.latestPrediction.expectedWeight);
-    } catch (err) {
-      console.error("Failed to fetch expected weight", err);
-    }
-  };
-
-  fetchExpectedWeight();
-}, []); 
-
-=======
   const [expectedWeight, setExpectedWeight] = useState<number | null>(null);
 
   useEffect(() => {
@@ -57,7 +32,6 @@ const Feedback = () => {
 
     fetchExpectedWeight();
   }, []);
->>>>>>> newdiet
 
   const onSubmit = async (data: FeedbackFormData) => {
     try {
@@ -166,11 +140,7 @@ const Feedback = () => {
             diet plan?
           </p>
           <button
-<<<<<<< HEAD
-            onClick={() => navigate("/main-page/diet-plan")}
-=======
             onClick={handleRegenerateDiet}
->>>>>>> newdiet
             className="bg-green-600 text-white px-4 py-2 rounded mt-2"
           >
             Yes
