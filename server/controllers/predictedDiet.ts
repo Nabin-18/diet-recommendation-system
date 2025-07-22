@@ -8,6 +8,9 @@ interface AuthenticatedRequest extends Request {
   };
 }
 
+// ---------------------------
+// Save new prediction & meals
+// ---------------------------
 export const savePrediction = async (
   req: AuthenticatedRequest,
   res: Response
@@ -16,12 +19,23 @@ export const savePrediction = async (
     const userId = req.user?.id;
     const { inputId, meals, bmr, tdee, bmi, calorie_target } = req.body;
 
-    if (!userId) {
-      res.status(401).json({ message: "Unauthorized" });
+    if (!userId || !inputId) {
+      res.status(400).json({ message: "Missing userId or inputId" });
       return;
     }
 
-    // Create the prediction entry
+    // 1. Mark all previous predictions as not current
+    await prisma.predictedDetails.updateMany({
+      where: {
+        userId,
+        isCurrent: true,
+      },
+      data: {
+        isCurrent: false,
+      },
+    });
+
+    // 2. Create new prediction
     const prediction = await prisma.predictedDetails.create({
       data: {
         bmr,
@@ -30,6 +44,7 @@ export const savePrediction = async (
         calorie_target,
         user: { connect: { id: userId } },
         inputDetail: { connect: { id: inputId } },
+        isCurrent: true,
         meals: {
           create: meals.map((meal: any) => ({
             name: meal.name,
@@ -59,19 +74,20 @@ export const savePrediction = async (
       data: prediction,
     });
   } catch (error) {
-    console.error("Prediction save error:", error);
-    res.status(500).json({
-      message: "Internal Server Error",
-    });
+    console.error("❌ Prediction save error:", error);
+    res.status(500).json({ message: "Internal Server Error" });
   }
 };
 
+// ----------------------------------
+// Fetch recent N predictions (default 3)
+// ----------------------------------
 export const getPredictedDetails = async (
   req: AuthenticatedRequest,
   res: Response
 ) => {
   const userId = req.user?.id;
-  const limit = Number(req.query.limit) || 3; // Default to 3 if not provided
+  const limit = Number(req.query.limit) || 3;
 
   if (!userId) {
     return res.status(401).json({ message: "Unauthorized" });
@@ -90,24 +106,27 @@ export const getPredictedDetails = async (
 
     res.status(200).json(predictions);
   } catch (error) {
-    console.error("Error fetching predictions:", error);
+    console.error("❌ Error fetching predictions:", error);
     res.status(500).json({ message: "Failed to fetch predictions" });
   }
 };
 
+// -------------------------------------------
+// Fetch latest diet plan (prediction + input)
+// -------------------------------------------
 export const getLatestDietPlan = async (
   req: AuthenticatedRequest,
   res: Response
 ) => {
   const userId = req.user?.id;
-  console.log("getLatestDietPlan - User ID:", userId); // Debug log
 
   if (!userId) {
     return res.status(401).json({ message: "Unauthorized" });
   }
+
   try {
     const latestPrediction = await prisma.predictedDetails.findFirst({
-      where: { userId },
+      where: { userId, isCurrent: true },
       orderBy: { predictionDate: "desc" },
       include: {
         meals: true,
@@ -120,15 +139,16 @@ export const getLatestDietPlan = async (
       orderBy: { createdAt: "desc" },
     });
 
-    console.log("Found latestPrediction:", !!latestPrediction); // Debug log
-    console.log("Found latestUserInput:", !!latestUserInput); // Debug log
+    if (!latestPrediction || !latestUserInput) {
+      return res.status(404).json({ message: "No diet plan found" });
+    }
 
     res.status(200).json({
-      latestPrediction: latestPrediction,
-      latestUserInput: latestUserInput,
+      latestPrediction,
+      latestUserInput,
     });
   } catch (error) {
-    console.error("Error fetching latest diet plan:", error);
+    console.error("❌ Error fetching latest diet plan:", error);
     res.status(500).json({ message: "Failed to fetch latest diet plan" });
   }
 };

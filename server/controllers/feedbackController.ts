@@ -57,7 +57,7 @@ export const submitFeedback = async (req: AuthenticatedRequest, res: Response) =
         return res.status(404).json({ message: "Input details not found." });
       }
 
-      // c. Request to FastAPI
+      // c. Request new diet plan from FastAPI
       const response = await axios.post("http://localhost:8000/recommend", {
         ...inputDetails,
         exclude,

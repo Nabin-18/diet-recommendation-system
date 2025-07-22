@@ -45,6 +45,7 @@ model UserInputDetails {
   cycleNumber      Int?
   endDate          DateTime
   startDate        DateTime
+  isActive         Boolean           @default(true)
   feedback         Feedback?
   predictedDetails PredictedDetails?
   user             User              @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -61,6 +62,8 @@ model PredictedDetails {
   bmr            Float?
   calorie_target Float?
   tdee           Float?
+  expectedWeight Float?
+  weightChange   Float?
   Instructions   String?
   Name           String?
   calories       Float?
@@ -110,16 +113,16 @@ model Feedback {
 }
 
 model Notification {
-  id              Int               @id @default(autoincrement())
-  message         String
-  sentAt          DateTime          @default(now())
-  read            Boolean           @default(false)
-  userId          Int
-  title           String
-  type            String
-  hasFeedback     Boolean?          @default(false)
-  relatedId       Int?
+  id          Int      @id @default(autoincrement())
+  message     String
+  sentAt      DateTime @default(now())
+  read        Boolean  @default(false)
+  userId      Int
+  title       String
+  type        String
+  hasFeedback Boolean? @default(false)
+  relatedId   Int?
 
-  user            User              @relation(fields: [userId], references: [id], onDelete: Cascade)
-  relatedInput    UserInputDetails? @relation("InputDetailNotifications", fields: [relatedId], references: [id], onDelete: Cascade)
+  user         User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  relatedInput UserInputDetails? @relation("InputDetailNotifications", fields: [relatedId], references: [id], onDelete: Cascade)
 }

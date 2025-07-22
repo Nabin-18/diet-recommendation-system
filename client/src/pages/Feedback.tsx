@@ -14,29 +14,24 @@ const Feedback = () => {
   const { register, handleSubmit } = useForm<FeedbackFormData>();
 
   const [submitted, setSubmitted] = useState(false);
-  const [expectedWeight, setExpectedWeight] = useState<number | null>(null); 
+  const [expectedWeight, setExpectedWeight] = useState<number | null>(null);
 
-  // ✅ Fetch expected weight when component mounts
   useEffect(() => {
-  const fetchExpectedWeight = async () => {
-    try {
-      const token = localStorage.getItem("token");
-       const res = await axios.get("/api/latest-prediction", {
+    const fetchExpectedWeight = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        const res = await axios.get("/api/latest-prediction", {
           headers: { Authorization: `Bearer ${token}` },
         });
 
-      // Log response to debug:
-      console.log("Latest prediction response:", res.data);
+        setExpectedWeight(res.data.latestPrediction.expectedWeight);
+      } catch (err) {
+        console.error("Failed to fetch expected weight", err);
+      }
+    };
 
-      setExpectedWeight(res.data.latestPrediction.expectedWeight);
-    } catch (err) {
-      console.error("Failed to fetch expected weight", err);
-    }
-  };
-
-  fetchExpectedWeight();
-}, []); 
-
+    fetchExpectedWeight();
+  }, []);
 
   const onSubmit = async (data: FeedbackFormData) => {
     try {
@@ -62,6 +57,36 @@ const Feedback = () => {
     } catch (err) {
       console.error("Feedback submission failed", err);
       alert("Failed to submit feedback, please try again.");
+    }
+  };
+
+  const handleRegenerateDiet = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      const res = await axios.post(
+        "http://localhost:5000/api/feedback",
+        {
+          inputDetailId: Number(inputDetailId),
+          weightChange: expectedWeight || 0, // fallback
+          achieved: true,
+          note: "Regenerate requested",
+          regenerate: true,
+        },
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      const newDiet = res.data?.newDiet;
+      if (!newDiet) {
+        alert("Failed to regenerate diet.");
+        return;
+      }
+
+      navigate("/main-page/diet-plan", { state: { dietPlanData: newDiet } });
+    } catch (error) {
+      console.error("Failed to regenerate diet", error);
+      alert("Something went wrong while generating a new plan.");
     }
   };
 
@@ -115,7 +140,7 @@ const Feedback = () => {
             diet plan?
           </p>
           <button
-            onClick={() => navigate("/main-page/diet-plan")}
+            onClick={handleRegenerateDiet}
             className="bg-green-600 text-white px-4 py-2 rounded mt-2"
           >
             Yes
