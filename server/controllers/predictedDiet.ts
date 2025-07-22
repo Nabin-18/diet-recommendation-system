@@ -26,14 +26,8 @@ export const savePrediction = async (
 
     // 1. Mark previous predictions for this user and input as not current
     await prisma.predictedDetails.updateMany({
-      where: {
-        userId,
-        inputId,
-        isCurrent: true,
-      },
-      data: {
-        isCurrent: false,
-      },
+      where: { userId, inputId: inputId },
+      data: { isCurrent: false }
     });
 
     // 2. Mark all other UserInputDetails for this user as inactive
@@ -56,15 +50,15 @@ export const savePrediction = async (
     // 4. Create new prediction with isCurrent = true
     const prediction = await prisma.predictedDetails.create({
       data: {
-        bmr,
-        tdee,
-        bmi,
-        calorie_target,
-        expectedWeight,
-        weightChange,
+        userId: userId,
+        inputId: inputId,
+        bmr: bmr,
+        tdee: tdee,
+        bmi: bmi,
+        calorie_target: calorie_target,
+        expectedWeight: expectedWeight,
+        weightChange: weightChange,
         isCurrent: true,
-        user: { connect: { id: userId } },
-        inputDetail: { connect: { id: inputId } },
         meals: {
           create: meals.map((meal: any) => ({
             name: meal.name,
@@ -137,36 +131,21 @@ export const getLatestDietPlan = async (
   res: Response
 ) => {
   const userId = req.user?.id;
-
-  if (!userId) {
-    return res.status(401).json({ message: "Unauthorized" });
-  }
+  if (!userId) return res.status(401).json({ message: "Unauthorized" });
 
   try {
-    // Find the active UserInputDetails for this user
     const activeInput = await prisma.userInputDetails.findFirst({
-      where: {
-        userId,
-        isActive: true,
-      },
+      where: { userId, isActive: true },
     });
 
     if (!activeInput) {
       return res.status(404).json({ message: "No active diet input found" });
     }
 
-    // Find current prediction for that active input
     const latestPrediction = await prisma.predictedDetails.findFirst({
-      where: {
-        userId,
-        inputId: activeInput.id,
-        isCurrent: true,
-      },
+      where: { userId, inputId: activeInput.id, isCurrent: true },
       orderBy: { predictionDate: "desc" },
-      include: {
-        meals: true,
-        inputDetail: true,
-      },
+      include: { meals: true, inputDetail: true },
     });
 
     if (!latestPrediction) {
