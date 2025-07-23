@@ -654,6 +654,18 @@ def suggest_diet(user_input: dict, recipe_df: pd.DataFrame, max_meals: int = 5, 
             if kcal_sum >= cal_target * (1 - tolerance):
                 break
 
+    # If no meals found, return empty list
+    if not diet:
+        return {
+            "bmr": round(bmr, 2),
+            "bmi": bmi,
+            "tdee": tdee,
+            "calorie_target": cal_target,
+            "actual_calories": round(kcal_sum, 1),
+            "diet_plan": [],
+            "calorie_accuracy": 0
+        }
+
     return {
         "bmr": round(bmr, 2),
         "bmi": bmi,
@@ -667,4 +679,4 @@ def suggest_diet(user_input: dict, recipe_df: pd.DataFrame, max_meals: int = 5, 
 
 
 #     
-#   
+#

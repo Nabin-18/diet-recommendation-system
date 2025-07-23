@@ -28,18 +28,19 @@ export const handleDietCycleResponse = async (
     if (response === "Yes") {
       const newCycleNumber = (latestInput?.cycleNumber ?? 0) + 1;
 
+      // Get all previous recipe names used by the user
       const previousRecipes = await prisma.mealPrediction.findMany({
         where: {
-          predictedDetails: {
+          prediction: {
             userId,
           },
         },
-        select: {
-          name: true,
-        },
+        select: { name: true },
       });
 
-      const usedRecipeNames = previousRecipes.map((meal) => meal.name.toLowerCase());
+      const usedRecipeNames = previousRecipes.map((meal) =>
+        meal.name.toLowerCase()
+      );
 
       const filteredMeals = predictionData.meals.filter(
         (meal: any) => !usedRecipeNames.includes(meal.name.toLowerCase())
@@ -51,21 +52,40 @@ export const handleDietCycleResponse = async (
         });
       }
 
+      // Create new input cycle
       const newInput = await prisma.userInputDetails.create({
         data: {
           ...userInputData,
           userId,
           cycleNumber: newCycleNumber,
           startDate: new Date(),
-          endDate: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000),
+          endDate: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000), // +15 days
         },
       });
 
+      // Create prediction with filtered meals
       const prediction = await prisma.predictedDetails.create({
         data: {
-          ...predictionData,
           userId,
           inputId: newInput.id,
+          bmi: predictionData.bmi,
+          bmr: predictionData.bmr,
+          tdee: predictionData.tdee,
+          calorie_target: predictionData.calorie_target,
+          expectedWeight: predictionData.expectedWeight,
+          weightChange: predictionData.weightChange,
+          Instructions: predictionData.Instructions || "",
+          Name: predictionData.Name || `Diet Plan ${Date.now()}`,
+          calories: predictionData.calories,
+          carbs: predictionData.carbs,
+          fats: predictionData.fats,
+          fiber: predictionData.fiber,
+          image: predictionData.image || "",
+          protein: predictionData.protein,
+          sodium: predictionData.sodium,
+          sugar: predictionData.sugar,
+          isCurrent: true,
+
           meals: {
             create: filteredMeals.map((meal: any) => ({
               name: meal.name,
@@ -79,9 +99,9 @@ export const handleDietCycleResponse = async (
               sugar: meal.sugar,
               sodium: meal.sodium,
               image: meal.image,
-              instructions: meal.instructions,
-              calorie_match_pct: meal.calorie_match_pct,
-              optimized_ingredients: meal.optimized_ingredients,
+              instructions: JSON.stringify(meal.instructions || []),
+              calorie_match_pct: meal.calorie_match_pct || 0,
+              optimized_ingredients: meal.optimized_ingredients || {},
             })),
           },
         },
@@ -98,8 +118,11 @@ export const handleDietCycleResponse = async (
         data: latestInput,
       });
     }
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error handling diet cycle response:", error);
-    return res.status(500).json({ message: "Internal Server Error" });
+    return res.status(500).json({
+      message: "Internal Server Error",
+      error: error.message,
+    });
   }
 };

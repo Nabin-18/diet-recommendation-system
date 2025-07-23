@@ -2,116 +2,123 @@ import axios from "axios";
 import prisma from "../config/db";
 import type { Request, Response } from "express";
 
-type AuthenticatedRequest = Request & { user?: { id: number } };
+type AuthenticatedRequest = Request & {
+  user?: { id: number };
+};
 
 export const submitFeedback = async (req: AuthenticatedRequest, res: Response) => {
+  console.log("Received feedback submission:", req.body);
   try {
     const userId = req.user?.id;
     const { inputDetailId, weightChange, achieved, note, regenerate } = req.body;
 
     if (!userId || !inputDetailId) {
-      return res.status(400).json({ message: "Missing required fields." });
+      return res.status(400).json({ message: "Missing required data" });
     }
 
-    // 1. Upsert feedback
-    const feedback = await prisma.feedback.upsert({
+    const weightChangeString = weightChange ? String(weightChange) : null;
+
+    await prisma.feedback.upsert({
       where: { inputDetailId: Number(inputDetailId) },
-      update: {
-        weightChange: String(weightChange),
-        achieved: achieved === "true",
-        note,
-      },
-      create: {
-        weightChange: String(weightChange),
-        achieved: achieved === "true",
-        note,
-        inputDetailId: Number(inputDetailId),
-        userId,
-      },
+      update: { weightChange: weightChangeString, achieved, note },
+      create: { inputDetailId: Number(inputDetailId), userId, weightChange: weightChangeString, achieved, note },
     });
 
-    // 2. If regeneration is requested
-    let newDiet = null;
+    // 1. Update weight if changed
+    if (weightChange) {
+      await prisma.userInputDetails.update({
+        where: { id: Number(inputDetailId) },
+        data: { weight: Number(weightChange) },
+      });
 
-    if (regenerate === "true") {
-      // a. Get all previously used recipe names
+      await prisma.user.update({
+        where: { id: userId },
+        data: { currentWeight: Number(weightChange), lastWeightUpdate: new Date() },
+      });
+    }
+
+    // 2. Fetch inputDetails AFTER updating weight
+    const inputDetails = await prisma.userInputDetails.findUnique({
+      where: { id: Number(inputDetailId) },
+    });
+
+    if (!inputDetails) {
+      return res.status(404).json({ message: "User input details not found" });
+    }
+
+    let responseData: { message: string; newDiet?: { prediction: any; meals: any } } = { message: "Feedback submitted successfully" };
+
+    if (regenerate) {
       const previousMeals = await prisma.mealPrediction.findMany({
-        where: {
-          prediction: {
-            inputDetail: {
-              userId,
-            },
-          },
-        },
+        where: { prediction: { inputId: inputDetails.id } },
         select: { name: true },
       });
 
-      const exclude = previousMeals.map((m) => m.name);
+      const excludeRecipeNames = previousMeals.map((m) => m.name);
 
-      // b. Get latest input details
-      const inputDetails = await prisma.userInputDetails.findUnique({
-        where: { id: Number(inputDetailId) },
-      });
+      const healthConditions =
+        Array.isArray(inputDetails.healthIssues)
+          ? inputDetails.healthIssues
+          : (typeof inputDetails.healthIssues === "string" && inputDetails.healthIssues.trim() !== ""
+            ? inputDetails.healthIssues.split(",").map((s: string) => s.trim()).filter(Boolean)
+            : []);
 
-      if (!inputDetails) {
-        return res.status(404).json({ message: "Input details not found." });
-      }
+      const mappedInput = {
+        gender: inputDetails.gender === "male" ? 1 : 0,
+        age: inputDetails.age,
+        height_cm: inputDetails.height,
+        weight_kg: inputDetails.weight, // <-- now this is the updated weight!
+        goal: inputDetails.goal,
+        Type: inputDetails.preferences, // <-- use the value from DB, don't hardcode!
+        meal_type: inputDetails.mealPlan || "general",
+        health_conditions: healthConditions,
+        activity_type: inputDetails.activityType,
+        exclude_recipe_names: Array.isArray(excludeRecipeNames) ? excludeRecipeNames : [],
+      };
 
-      // c. Request new diet plan from FastAPI
-      const response = await axios.post("http://localhost:8000/recommend", {
-        ...inputDetails,
-        exclude,
-      });
+      console.log("Sending to FastAPI:", mappedInput);
 
-      const data = response.data;
-      const dietName = `Diet-${Date.now()}`;
-
-      // d. Save new prediction
-      const newPrediction = await prisma.predictedDetails.create({
-        data: {
-          dietName,
-          tdee: data.tdee,
-          bmr: data.bmr,
-          bmi: data.bmi,
-          calories: data.total_calories,
-          fat: data.total_fat,
-          protein: data.total_protein,
-          carbs: data.total_carbohydrate,
-          fiber: data.total_fiber,
-          userInputDetailsId: Number(inputDetailId),
-        },
-      });
-
-      // e. Save all meals
-      for (const meal of data.diet_plan) {
-        await prisma.mealPrediction.create({
-          data: {
-            name: meal.name,
-            calories: meal.total_calories,
-            protein: meal.protein,
-            carbs: meal.carbohydrate,
-            fat: meal.fat,
-            fiber: meal.fiber,
-            sodium: meal.sodium,
-            sugar: meal.sugar,
-            ingredient_quantity: JSON.stringify(meal.ingredient_quantity),
-            recipeinstruction: JSON.stringify(meal.recipeinstruction),
-            predictedDetailsId: newPrediction.id,
-          },
+      let apiResponse;
+      try {
+        apiResponse = await axios.post(
+          "http://127.0.0.1:8000/recommend",
+          mappedInput
+        );
+      } catch (err: any) {
+        console.error("FastAPI error:", err?.response?.data || err.message);
+        return res.status(500).json({
+          message: err?.response?.data?.message || "Error from recommendation service",
+          fastapiError: err?.response?.data,
         });
       }
 
-      newDiet = { dietName, meals: data.diet_plan };
+      console.log("Received from FastAPI:", apiResponse.data);
+      const prediction = apiResponse.data;
+
+      // Defensive: always treat meals as an array
+      const meals = Array.isArray(prediction?.diet_plan?.meals) ? prediction.diet_plan.meals : [];
+
+      responseData = {
+        message: "Feedback submitted and new diet plan generated",
+        newDiet: {
+          prediction: prediction,
+          meals,
+          userInput: inputDetails,
+          metadata: { formSubmittedAt: new Date().toISOString() },
+        },
+      };
     }
 
-    return res.status(200).json({
-      message: "Feedback submitted successfully",
-      feedback,
-      ...(newDiet && { newDiet }),
-    });
-
+    return res.status(200).json(responseData);
   } catch (error: any) {
-    console.error("❌ Error in submitFeedback:", error);
-    return res.status(500).json({ message: "Internal server error" });
+    console.error("Feedback submission error:", error);
+    if (error.response) {
+      console.error("FastAPI error response:", error.response.data);
+    }
+    return res.status(500).json({
+      message: error.response?.data?.message || "Internal server error",
+      error: error.message,
+      fastapiError: error.response?.data,
+    });
   }
 };

@@ -37,7 +37,7 @@ interface MealData {
   mealType?: string;
 }
 
-interface CleanMealData extends Omit<MealData, 'instructions'> {
+interface CleanMealData extends Omit<MealData, "instructions"> {
   instructions: string[];
 }
 
@@ -93,31 +93,31 @@ const DietPlan: React.FC = () => {
 
   const normalizeInstructions = (instructions: unknown): string[] => {
     if (!instructions) return [];
-    
-    if (typeof instructions === 'string') {
+
+    if (typeof instructions === "string") {
       try {
         const parsed = JSON.parse(instructions);
         return normalizeInstructions(parsed);
       } catch {
         return instructions
           .split(/\n|\d\./)
-          .map(step => step.trim())
+          .map((step) => step.trim())
           .filter(Boolean);
       }
     }
-    
+
     if (Array.isArray(instructions)) {
       return instructions
-        .flatMap(item => normalizeInstructions(item))
+        .flatMap((item) => normalizeInstructions(item))
         .filter(Boolean);
     }
-    
-    if (typeof instructions === 'object') {
+
+    if (typeof instructions === "object") {
       return Object.values(instructions)
-        .flatMap(value => normalizeInstructions(value))
+        .flatMap((value) => normalizeInstructions(value))
         .filter(Boolean);
     }
-    
+
     return [];
   };
 
@@ -129,9 +129,12 @@ const DietPlan: React.FC = () => {
         return;
       }
 
-      const res = await axios.get<DietPlanApiResponse>("/api/latest-prediction", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const res = await axios.get<DietPlanApiResponse>(
+        "http://localhost:5000/api/latest-prediction",
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
 
       if (!res.data?.latestPrediction || !res.data?.latestUserInput) {
         throw new Error("No diet plan data found");
@@ -139,12 +142,11 @@ const DietPlan: React.FC = () => {
 
       const { latestPrediction, latestUserInput } = res.data;
 
-      const meals: CleanMealData[] = (Array.isArray(latestPrediction.meals) 
-        ? latestPrediction.meals 
-        : []
-      ).map(meal => ({
+      const meals: CleanMealData[] = (
+        Array.isArray(latestPrediction.meals) ? latestPrediction.meals : []
+      ).map((meal) => ({
         ...meal,
-        instructions: normalizeInstructions(meal.instructions)
+        instructions: normalizeInstructions(meal.instructions),
       }));
 
       const convertedData: DietPlanData = {
@@ -168,7 +170,8 @@ const DietPlan: React.FC = () => {
           meals,
         },
         metadata: {
-          formSubmittedAt: latestPrediction.predictionDate || new Date().toISOString(),
+          formSubmittedAt:
+            latestPrediction.predictionDate || new Date().toISOString(),
         },
       };
 
@@ -176,9 +179,7 @@ const DietPlan: React.FC = () => {
     } catch (error) {
       console.error("Error fetching diet plan:", error);
       setError(
-        error instanceof Error 
-          ? error.message 
-          : "Failed to load diet plan"
+        error instanceof Error ? error.message : "Failed to load diet plan"
       );
     } finally {
       setLoading(false);
@@ -194,11 +195,11 @@ const DietPlan: React.FC = () => {
         ...state.dietPlanData,
         recommendations: {
           ...state.dietPlanData.recommendations,
-          meals: state.dietPlanData.recommendations.meals.map(meal => ({
+          meals: state.dietPlanData.recommendations.meals.map((meal) => ({
             ...meal,
-            instructions: normalizeInstructions(meal.instructions)
-          }))
-        }
+            instructions: normalizeInstructions(meal.instructions),
+          })),
+        },
       };
       setDietData(normalizedData);
       setLoading(false);
@@ -215,12 +216,12 @@ const DietPlan: React.FC = () => {
 
     const formatDate = (dateString: string) => {
       const date = new Date(dateString);
-      return date.toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
+      return date.toLocaleDateString("en-US", {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
       });
     };
 
@@ -235,7 +236,7 @@ PERSONAL INFORMATION:
 - Goal: ${dietData.userInput.goal.replace("_", " ")}
 - Activity: ${dietData.userInput.activityType}
 - Diet Preference: ${dietData.userInput.preferences}
-- Health Condition: ${dietData.userInput.healthIssues || 'None'}
+- Health Condition: ${dietData.userInput.healthIssues || "None"}
 - Meal Plan: ${dietData.userInput.mealPlan}
 - Meals Per Day: ${dietData.userInput.mealFrequency}
 
@@ -260,10 +261,10 @@ ${index + 1}. ${meal.name.toUpperCase()}
 - Sodium: ${meal.sodium}mg
 
 INGREDIENTS:
-${meal.optimized_ingredients.map(item => `• ${item}`).join('\n')}
+${meal.optimized_ingredients.map((item) => `• ${item}`).join("\n")}
 
 INSTRUCTIONS:
-${meal.instructions.map((step, i) => `${i + 1}. ${step}`).join('\n')}
+${meal.instructions.map((step, i) => `${i + 1}. ${step}`).join("\n")}
 `;
     });
 
@@ -271,7 +272,7 @@ ${meal.instructions.map((step, i) => `${i + 1}. ${step}`).join('\n')}
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `diet-plan-${new Date().toISOString().split('T')[0]}.txt`;
+    a.download = `diet-plan-${new Date().toISOString().split("T")[0]}.txt`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -307,9 +308,12 @@ ${meal.instructions.map((step, i) => `${i + 1}. ${step}`).join('\n')}
   };
 
   const getBMICategory = (bmi: number) => {
-    if (bmi < 18.5) return { category: "Underweight", color: "bg-blue-100 text-blue-800" };
-    if (bmi < 25) return { category: "Normal", color: "bg-green-100 text-green-800" };
-    if (bmi < 30) return { category: "Overweight", color: "bg-yellow-100 text-yellow-800" };
+    if (bmi < 18.5)
+      return { category: "Underweight", color: "bg-blue-100 text-blue-800" };
+    if (bmi < 25)
+      return { category: "Normal", color: "bg-green-100 text-green-800" };
+    if (bmi < 30)
+      return { category: "Overweight", color: "bg-yellow-100 text-yellow-800" };
     return { category: "Obese", color: "bg-red-100 text-red-800" };
   };
 
@@ -339,9 +343,7 @@ ${meal.instructions.map((step, i) => `${i + 1}. ${step}`).join('\n')}
             <Button onClick={fetchLatestPlan} variant="outline">
               Try Again
             </Button>
-            <Button onClick={handleNewPlan}>
-              Create New Diet Plan
-            </Button>
+            <Button onClick={handleNewPlan}>Create New Diet Plan</Button>
           </div>
         </div>
       </div>
@@ -419,7 +421,8 @@ ${meal.instructions.map((step, i) => `${i + 1}. ${step}`).join('\n')}
           <div className="flex items-center space-x-2 text-gray-600">
             <Calendar className="w-4 h-4" />
             <span>
-              Generated on {new Date(metadata.formSubmittedAt).toLocaleDateString()}
+              Generated on{" "}
+              {new Date(metadata.formSubmittedAt).toLocaleDateString()}
             </span>
           </div>
           <div className="flex items-center space-x-2 text-gray-600">
@@ -467,40 +470,32 @@ ${meal.instructions.map((step, i) => `${i + 1}. ${step}`).join('\n')}
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              <InfoRow 
-                label="BMI:" 
+              <InfoRow
+                label="BMI:"
                 value={
                   <div className="flex items-center gap-2">
                     <span>{recommendations.bmi.toFixed(1)}</span>
-                    <Badge className={bmiInfo.color}>
-                      {bmiInfo.category}
-                    </Badge>
+                    <Badge className={bmiInfo.color}>{bmiInfo.category}</Badge>
                   </div>
-                } 
+                }
               />
-              <InfoRow 
-                label="BMR:" 
-                value={`${recommendations.bmr} cal`} 
-              />
-              <InfoRow 
-                label="TDEE:" 
-                value={`${recommendations.tdee} cal`} 
-              />
-              <InfoRow 
-                label="Daily Target:" 
+              <InfoRow label="BMR:" value={`${recommendations.bmr} cal`} />
+              <InfoRow label="TDEE:" value={`${recommendations.tdee} cal`} />
+              <InfoRow
+                label="Daily Target:"
                 value={
                   <span className="text-blue-600">
                     {recommendations.calorie_target} cal
                   </span>
-                } 
+                }
               />
-              <InfoRow 
-                label="Plan Total:" 
+              <InfoRow
+                label="Plan Total:"
                 value={
                   <span className="text-green-600">
                     {totalCalories.toFixed(0)} cal
                   </span>
-                } 
+                }
               />
             </CardContent>
           </Card>
@@ -514,21 +509,19 @@ ${meal.instructions.map((step, i) => `${i + 1}. ${step}`).join('\n')}
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              <InfoRow 
-                label="Diet Type:" 
+              <InfoRow
+                label="Diet Type:"
                 value={
-                  <span className="capitalize">
-                    {userInput.preferences}
-                  </span>
-                } 
+                  <span className="capitalize">{userInput.preferences}</span>
+                }
               />
-              <InfoRow 
-                label="Meals/Day:" 
-                value={recommendations.meals.length} 
+              <InfoRow
+                label="Meals/Day:"
+                value={recommendations.meals.length}
               />
-              <InfoRow 
-                label="Health Issues:" 
-                value={userInput.healthIssues || "None"} 
+              <InfoRow
+                label="Health Issues:"
+                value={userInput.healthIssues || "None"}
               />
             </CardContent>
           </Card>
@@ -539,7 +532,7 @@ ${meal.instructions.map((step, i) => `${i + 1}. ${step}`).join('\n')}
           <h2 className="text-xl font-semibold text-gray-800 mb-4">
             Recommended Meals
           </h2>
-          
+
           {recommendations.meals.map((meal, index) => (
             <MealCard
               key={`${meal.name}-${index}`}
@@ -552,8 +545,8 @@ ${meal.instructions.map((step, i) => `${i + 1}. ${step}`).join('\n')}
 
         {/* Action Button */}
         <div className="flex justify-center mt-12">
-          <Button 
-            onClick={handleNewPlan} 
+          <Button
+            onClick={handleNewPlan}
             size="lg"
             className="px-8 py-6 text-lg"
           >
