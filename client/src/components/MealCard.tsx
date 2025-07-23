@@ -89,25 +89,26 @@ const MealCard: React.FC<MealCardProps> = ({ meal, index, instructions }) => {
           </div>
         </div>
 
-        {/* ingredients */}
+        {/* Ingredients Section */}
         <div className="mb-6 bg-gray-50 rounded-lg p-4 border border-gray-100">
-          <h3 className="font-semibold text-gray-800 mb-3 flex items-center">
+          <h3 className="font-semibold text-gray-800 mb-2 flex items-center">
             <ChefHat className="w-4 h-4 mr-2 text-gray-600" />
             Ingredients:
           </h3>
-          <ul className="space-y-1.5 text-gray-700">
+          <ul className="flex flex-wrap gap-2 ml-1">
             {meal.optimized_ingredients &&
             meal.optimized_ingredients.length > 0 ? (
               meal.optimized_ingredients.map((ingredient, idx) => (
-                <li key={idx} className="flex items-start">
-                  <span className="text-gray-400 mr-2 mt-1.5">•</span>
-                  <span>{ingredient}</span>
+                <li key={idx}>
+                  <span className="inline-block px-3 py-1  font-semibold rounded-full shadow-sm">
+                    {ingredient}
+                  </span>
                 </li>
               ))
             ) : (
-              <li className="flex items-start">
-                <span className="text-gray-400 mr-2 mt-1.5">•</span>
-                <span>No ingredients available</span>
+              <li className="flex items-center">
+                <span className="text-gray-400 mr-2">•</span>
+                <span className="text-gray-500">No ingredients available</span>
               </li>
             )}
           </ul>
@@ -154,5 +155,3 @@ const MealCard: React.FC<MealCardProps> = ({ meal, index, instructions }) => {
 };
 
 export default MealCard;
-
-
