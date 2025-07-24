@@ -21,6 +21,7 @@ const Feedback = () => {
   const [expectedWeight, setExpectedWeight] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [submittedWeight, setSubmittedWeight] = useState<number | null>(null); // <-- store user's submitted weight
 
   useEffect(() => {
     const fetchExpectedWeight = async () => {
@@ -49,15 +50,15 @@ const Feedback = () => {
       setError(null);
       const token = localStorage.getItem("token");
 
-      // Calculate if goal was achieved (with 0.5kg tolerance)
       const achieved =
         expectedWeight !== null &&
-        Math.abs(data.weightChange - expectedWeight) <= 0.5;
+        Math.abs(Number(data.weightChange) - expectedWeight) <= 0.5;
 
       await axios.post(
         "http://localhost:5000/api/feedback",
         {
           ...data,
+          weightChange: Number(data.weightChange),
           achieved,
           inputDetailId: Number(inputDetailId),
         },
@@ -69,6 +70,7 @@ const Feedback = () => {
         }
       );
 
+      setSubmittedWeight(Number(data.weightChange)); // <-- save submitted weight
       setSubmitted(true);
     } catch (err) {
       console.error("Feedback submission failed", err);
@@ -84,11 +86,17 @@ const Feedback = () => {
       setError(null);
       const token = localStorage.getItem("token");
 
+      if (!submittedWeight) {
+        setError("No submitted weight found. Please submit feedback first.");
+        setIsLoading(false);
+        return;
+      }
+
       const res = await axios.post(
         "http://localhost:5000/api/feedback",
         {
           inputDetailId: Number(inputDetailId),
-          weightChange: expectedWeight || 0,
+          weightChange: submittedWeight, // <-- use user's submitted weight
           achieved: true,
           note: "Regenerate requested",
           regenerate: true,

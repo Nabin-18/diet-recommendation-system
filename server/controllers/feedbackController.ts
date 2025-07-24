@@ -16,37 +16,54 @@ export const submitFeedback = async (req: AuthenticatedRequest, res: Response) =
       return res.status(400).json({ message: "Missing required data" });
     }
 
-    const weightChangeString = weightChange ? String(weightChange) : null;
+    const weightChangeNumber = weightChange !== undefined && weightChange !== null
+      ? Number(weightChange)
+      : null;
+    const weightChangeString = weightChangeNumber !== null ? String(weightChangeNumber) : null;
 
-    await prisma.feedback.upsert({
-      where: { inputDetailId: Number(inputDetailId) },
-      update: { weightChange: weightChangeString, achieved, note },
-      create: { inputDetailId: Number(inputDetailId), userId, weightChange: weightChangeString, achieved, note },
-    });
-
-    // 1. Update weight if changed
-    if (weightChange) {
+    // Always update DB weight with the latest submitted value
+    if (weightChangeNumber !== null) {
       await prisma.userInputDetails.update({
         where: { id: Number(inputDetailId) },
-        data: { weight: Number(weightChange) },
+        data: { weight: weightChangeNumber },
       });
 
       await prisma.user.update({
         where: { id: userId },
-        data: { currentWeight: Number(weightChange), lastWeightUpdate: new Date() },
+        data: {
+          currentWeight: weightChangeNumber,
+          lastWeightUpdate: new Date(),
+        },
       });
     }
 
-    // 2. Fetch inputDetails AFTER updating weight
+    // Upsert feedback
+    await prisma.feedback.upsert({
+      where: { inputDetailId: Number(inputDetailId) },
+      update: { weightChange: weightChangeString, achieved, note },
+      create: {
+        inputDetailId: Number(inputDetailId),
+        userId,
+        weightChange: weightChangeString,
+        achieved,
+        note,
+      },
+    });
+
+    // Fetch updated input details
     const inputDetails = await prisma.userInputDetails.findUnique({
       where: { id: Number(inputDetailId) },
     });
+
+    console.log("Fetched inputDetails after update:", inputDetails?.weight);
 
     if (!inputDetails) {
       return res.status(404).json({ message: "User input details not found" });
     }
 
-    let responseData: { message: string; newDiet?: { prediction: any; meals: any } } = { message: "Feedback submitted successfully" };
+    let responseData: { message: string; newDiet?: { prediction: any; meals: any } } = {
+      message: "Feedback submitted successfully",
+    };
 
     if (regenerate) {
       const previousMeals = await prisma.mealPrediction.findMany({
@@ -59,17 +76,20 @@ export const submitFeedback = async (req: AuthenticatedRequest, res: Response) =
       const healthConditions =
         Array.isArray(inputDetails.healthIssues)
           ? inputDetails.healthIssues
-          : (typeof inputDetails.healthIssues === "string" && inputDetails.healthIssues.trim() !== ""
+          : typeof inputDetails.healthIssues === "string" && inputDetails.healthIssues.trim() !== ""
             ? inputDetails.healthIssues.split(",").map((s: string) => s.trim()).filter(Boolean)
-            : []);
+            : [];
+
+      // Always use the latest weight stored in UserInputDetails for FastAPI
+      const weightForFastAPI = inputDetails.weight;
 
       const mappedInput = {
         gender: inputDetails.gender === "male" ? 1 : 0,
         age: inputDetails.age,
         height_cm: inputDetails.height,
-        weight_kg: inputDetails.weight, // <-- now this is the updated weight!
+        weight_kg: weightForFastAPI,
         goal: inputDetails.goal,
-        Type: inputDetails.preferences, // <-- use the value from DB, don't hardcode!
+        Type: inputDetails.preferences,
         meal_type: inputDetails.mealPlan || "general",
         health_conditions: healthConditions,
         activity_type: inputDetails.activityType,
@@ -80,10 +100,7 @@ export const submitFeedback = async (req: AuthenticatedRequest, res: Response) =
 
       let apiResponse;
       try {
-        apiResponse = await axios.post(
-          "http://127.0.0.1:8000/recommend",
-          mappedInput
-        );
+        apiResponse = await axios.post("http://127.0.0.1:8000/recommend", mappedInput);
       } catch (err: any) {
         console.error("FastAPI error:", err?.response?.data || err.message);
         return res.status(500).json({
@@ -94,14 +111,12 @@ export const submitFeedback = async (req: AuthenticatedRequest, res: Response) =
 
       console.log("Received from FastAPI:", apiResponse.data);
       const prediction = apiResponse.data;
-
-      // Defensive: always treat meals as an array
       const meals = Array.isArray(prediction?.diet_plan?.meals) ? prediction.diet_plan.meals : [];
 
       responseData = {
         message: "Feedback submitted and new diet plan generated",
         newDiet: {
-          prediction: prediction,
+          prediction,
           meals,
           userInput: inputDetails,
           metadata: { formSubmittedAt: new Date().toISOString() },
