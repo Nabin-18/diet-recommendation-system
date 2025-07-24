@@ -9,5 +9,6 @@ api.py
 node_modules
 generated
 .env
+/Dataset/env
 
 __pycache__/
