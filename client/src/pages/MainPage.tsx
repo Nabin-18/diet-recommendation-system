@@ -83,13 +83,13 @@ const MainPage = () => {
       gradient: "from-blue-500 to-indigo-600",
       description: "Health metrics",
     },
-    {
-      to: "history",
-      label: "History",
-      icon: <Activity className="w-5 h-5" />,
-      gradient: "from-purple-500 to-pink-600",
-      description: "Your diet history",
-    },
+    // {
+    //   to: "history",
+    //   label: "History",
+    //   icon: <Activity className="w-5 h-5" />,
+    //   gradient: "from-purple-500 to-pink-600",
+    //   description: "Your diet history",
+    // },
   ];
 
   const handleLogout = () => {

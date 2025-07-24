@@ -524,11 +524,6 @@ const UserInput: React.FC<Props> = ({
                         <SelectItem value="general">
                           General (All Meals)
                         </SelectItem>
-                        <SelectItem value="breakfast">
-                          Breakfast Focus
-                        </SelectItem>
-                        <SelectItem value="lunch">Lunch Focus</SelectItem>
-                        <SelectItem value="dinner">Dinner Focus</SelectItem>
                       </SelectContent>
                     </Select>
                   )}
@@ -540,34 +535,7 @@ const UserInput: React.FC<Props> = ({
                 )}
               </div>
 
-              <div>
-                <Controller
-                  control={control}
-                  name="mealFrequency"
-                  render={({ field }) => (
-                    <Select
-                      onValueChange={(val) => field.onChange(Number(val))}
-                      value={field.value?.toString() || ""}
-                      disabled={isFormLoading}
-                    >
-                      <SelectTrigger className="rounded-[8px]">
-                        <SelectValue placeholder="Meals Per Day" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="1">1 Meal</SelectItem>
-                        <SelectItem value="2">2 Meals</SelectItem>
-                        <SelectItem value="3">3 Meals</SelectItem>
-                        <SelectItem value="4">4 Meals</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  )}
-                />
-                {errors.mealFrequency && (
-                  <p className="text-red-500 text-sm mt-1">
-                    {errors.mealFrequency.message}
-                  </p>
-                )}
-              </div>
+              
             </div>
 
             <div className="flex gap-4 justify-center mt-6">
