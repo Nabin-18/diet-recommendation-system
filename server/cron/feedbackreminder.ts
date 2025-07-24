@@ -16,16 +16,12 @@ const transporter = nodemailer.createTransport({
 export const sendFeedbackReminders = async () => {
   const twoMinutesAgo = new Date(Date.now() - 2 * 60 * 1000);
 
-  // Calculate the date 15 days ago
-  // const fifteenDaysAgo = new Date(Date.now() - 15 * 24 * 60 * 60 * 1000);
-
-  // Find all users who have at least one eligible input
+  // Find users who have at least one diet plan older than 2 minutes and no feedback
   const usersToRemind = await prisma.user.findMany({
     where: {
       UserInputDetails: {
         some: {
           createdAt: { lt: twoMinutesAgo },
-          // createdAt: { gte: fifteenDaysAgo },
           feedback: null,
         },
       },
@@ -34,7 +30,6 @@ export const sendFeedbackReminders = async () => {
       UserInputDetails: {
         where: {
           createdAt: { lt: twoMinutesAgo },
-          // createdAt: { gte: fifteenDaysAgo },
           feedback: null,
         },
       },
@@ -50,7 +45,6 @@ export const sendFeedbackReminders = async () => {
         userId: user.id,
         type: "FEEDBACK_REMINDER",
         sentAt: { gte: twoMinutesAgo },
-        // createdAt: { gte: fifteenDaysAgo },
       },
     });
 
@@ -58,7 +52,7 @@ export const sendFeedbackReminders = async () => {
       continue; // Already sent recently
     }
 
-    // You can link to the first eligible input for feedback
+    // Link to the first eligible input for feedback
     const firstInput = user.UserInputDetails[0];
 
     await prisma.notification.create({
