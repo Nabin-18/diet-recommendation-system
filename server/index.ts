@@ -4,6 +4,8 @@ import cors from 'cors';
 import fetch from 'node-fetch';
 import multer from 'multer';
 import path from 'path';
+import "./cron";
+
 import { connectDB } from './config/db';
 import upload from "./middleware/uploadMiddleware";
 
@@ -29,14 +31,17 @@ import userRoutes from './routes/userRoutes';
 import userInputRoutes from './routes/userInputRoutes';
 import predictedDietRoutes from './routes/predictedDietRoutes';
 import dashboardRoute from './routes/dashboardRoute';
-import geminiRoute from './routes/geminiRoute';
-
+import dietCycleRoute from './routes/dietcycleRoute'
+import notificationRoutes from './routes/notificationRoute';
+import feedbackRoute from './routes/feedbackRoute'
 // Register routes
 app.use("/api/user", userRoutes);
 app.use("/api/user", userInputRoutes);
 app.use("/api", predictedDietRoutes);
 app.use("/api", dashboardRoute);
-app.use("/api", geminiRoute);
+app.use("/api/diet-cycle", dietCycleRoute);
+app.use("/api", notificationRoutes);
+app.use("/api",feedbackRoute)
 
 // FastAPI bridge route
 app.post("/api/fetch", async (req: Request, res: Response) => {

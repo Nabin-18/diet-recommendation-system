@@ -1,10 +1,17 @@
-// controllers/dashboard.ts
-
 import type { Request, Response } from "express";
 import prisma from "../config/db";
-import { AuthenticatedRequest } from "../middleware/authMiddleware";
 
-export const getDashboardData = async (req: AuthenticatedRequest, res: Response) => {
+interface AuthenticatedRequest extends Request {
+  user?: {
+    id: number;
+    email: string;
+  };
+}
+
+export const getDashboardData = async (
+  req: AuthenticatedRequest,
+  res: Response
+) => {
   try {
     const userId = req.user?.id;
 
@@ -18,7 +25,9 @@ export const getDashboardData = async (req: AuthenticatedRequest, res: Response)
       select: {
         name: true,
         email: true,
-        image: true, 
+        image: true,
+        gender: true,
+        dob: true,
       },
     });
 

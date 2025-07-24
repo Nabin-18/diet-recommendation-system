@@ -2,14 +2,16 @@ import prisma from "../config/db";
 import type { Request, Response } from "express";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
+import { createNotification } from "./notificationController";
 
-export const signUpController = async (req: Request, res: Response): Promise<void> => {
+export const signUpController = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
   try {
     const { name, email, password, dob, gender } = req.body;
 
-    const image = req.file? `/uploads/${req.file.filename}` : null;
-
-
+    const image = req.file ? `/uploads/${req.file.filename}` : null;
 
     const existingUser = await prisma.user.findUnique({
       where: { email },
@@ -32,9 +34,32 @@ export const signUpController = async (req: Request, res: Response): Promise<voi
       },
     });
 
+    try {
+      await createNotification({
+        userId: newUser.id,
+        type: "ACCOUNT_CREATED",
+        title: "Welcome to Diet Recommendation System! 🎉",
+        message: `Hi ${newUser.name}! Your account has been successfully created. Start your health journey by setting up your profile and getting personalized diet recommendations.`,
+      });
+      console.log(`Welcome notification created for user: ${newUser.name}`);
+    } catch (notificationError) {
+      console.error(
+        "Failed to create welcome notification:",
+        notificationError
+      );
+      // Don't fail the signup if notification creation fails
+    }
+
     res.status(201).json({
       message: "User created successfully!",
-      data: { id: newUser.id, name: newUser.name, email: newUser.email,dob: newUser.dob, gender: newUser.gender, image: newUser.image  },
+      data: {
+        id: newUser.id,
+        name: newUser.name,
+        email: newUser.email,
+        dob: newUser.dob,
+        gender: newUser.gender,
+        image: newUser.image,
+      },
     });
   } catch (error) {
     console.error(error);
@@ -42,7 +67,10 @@ export const signUpController = async (req: Request, res: Response): Promise<voi
   }
 };
 
-export const logInController = async (req: Request, res: Response): Promise<void> => {
+export const logInController = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
   try {
     const { email, password } = req.body;
 
@@ -67,11 +95,9 @@ export const logInController = async (req: Request, res: Response): Promise<void
       return;
     }
 
-    const token = jwt.sign(
-      { id: user.id, email: user.email },
-      jwtSecret,
-      { expiresIn: process.env.JWT_EXPIRES_IN || "1h" }
-    );
+    const token = jwt.sign({ id: user.id, email: user.email }, jwtSecret, {
+      expiresIn: process.env.JWT_EXPIRES_IN || "1h",
+    });
 
     res.status(200).json({
       message: "Login successful",
