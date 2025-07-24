@@ -91,8 +91,8 @@ const MealCard: React.FC<MealCardProps> = ({ meal, index, instructions }) => {
 
         {/* Ingredients Section */}
         <div className="mb-6 bg-gray-50 rounded-lg p-4 border border-gray-100">
-          <h3 className="font-semibold text-gray-800 mb-2 flex items-center">
-            <ChefHat className="w-4 h-4 mr-2 text-gray-600" />
+          <h3 className="font-semibold text-gray-800 mb-2 flex items-center text-2xl">
+            <ChefHat className="w-4 h-4 mr-2 text-gray-600 " />
             Ingredients:
           </h3>
           <ul className="flex flex-wrap gap-2 ml-1">
@@ -100,7 +100,7 @@ const MealCard: React.FC<MealCardProps> = ({ meal, index, instructions }) => {
             meal.optimized_ingredients.length > 0 ? (
               meal.optimized_ingredients.map((ingredient, idx) => (
                 <li key={idx}>
-                  <span className="inline-block px-3 py-1  font-semibold rounded-full shadow-sm">
+                  <span className="inline-block px-3 py-1  font-semibold rounded-full shadow-sm bg-blue-100 text-gray-700">
                     {ingredient}
                   </span>
                 </li>

@@ -554,6 +554,12 @@ const DietPlan: React.FC = () => {
                   {userInput.healthIssues || "None"}
                 </span>
               </div>
+                            <div className="flex justify-between">
+                <span className="text-gray-600">Meal Frequency:</span>
+                <span className="font-medium">
+                  {recommendations.meals.length || "None"}
+                </span>
+              </div>
             </CardContent>
           </Card>
         </div>
