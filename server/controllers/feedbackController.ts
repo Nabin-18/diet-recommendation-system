@@ -124,20 +124,8 @@ export const submitFeedback = async (req: AuthenticatedRequest, res: Response) =
       };
     }
 
-    // Create or update notification
-    if (regenerate || !regenerate) { // triggers for both generate and regenerate
-      await prisma.notification.create({
-        data: {
-          userId: userId,
-          type: "FEEDBACK_REMINDER",
-          title: "Diet Plan Generated",
-          message: "Your diet plan has been generated. Please provide feedback after following it.",
-          sentAt: new Date(),
-          relatedId: inputDetailId,
-          read: false,
-        },
-      });
-    }
+   
+  
 
     return res.status(200).json(responseData);
   } catch (error: any) {
