@@ -16,29 +16,33 @@ const transporter = nodemailer.createTransport({
 export const sendFeedbackReminders = async () => {
   const twoMinutesAgo = new Date(Date.now() - 2 * 60 * 1000);
 
-  // Find users who have at least one diet plan older than 2 minutes and no feedback
-  const usersToRemind = await prisma.user.findMany({
+  const inputsToRemind = await prisma.userInputDetails.findMany({
     where: {
-      UserInputDetails: {
-        some: {
-          createdAt: { lt: twoMinutesAgo },
+      OR: [
+        // No feedback yet, created more than 2 minutes ago
+        {
           feedback: null,
+          createdAt: { lt: twoMinutesAgo },
         },
-      },
+        // Feedback exists, but feedback.createdAt is more than 2 minutes ago
+        {
+          feedback: {
+            createdAt: { lt: twoMinutesAgo },
+          },
+        },
+      ],
     },
     include: {
-      UserInputDetails: {
-        where: {
-          createdAt: { lt: twoMinutesAgo },
-          feedback: null,
-        },
-      },
+      user: true,
+      feedback: true,
     },
   });
 
   let sentCount = 0;
 
-  for (const user of usersToRemind) {
+  for (const input of inputsToRemind) {
+    const user = input.user;
+
     // Check if a notification was sent in the last 2 minutes for this user
     const recentNotification = await prisma.notification.findFirst({
       where: {
@@ -52,9 +56,6 @@ export const sendFeedbackReminders = async () => {
       continue; // Already sent recently
     }
 
-    // Link to the first eligible input for feedback
-    const firstInput = user.UserInputDetails[0];
-
     await prisma.notification.create({
       data: {
         userId: user.id,
@@ -62,12 +63,12 @@ export const sendFeedbackReminders = async () => {
         type: "FEEDBACK_REMINDER",
         message: `Reminder: Please provide feedback on your current diet plan.`,
         sentAt: new Date(),
-        relatedId: firstInput?.id,
+        relatedId: input.id,
         hasFeedback: true,
       },
     });
 
-    const feedbackLink = `${frontendUrl}/main-page/feedback-form/${firstInput?.id}`;
+    const feedbackLink = `${frontendUrl}/main-page/feedback-form/${input.id}`;
 
     await transporter.sendMail({
       from: process.env.EMAIL_USER!,
