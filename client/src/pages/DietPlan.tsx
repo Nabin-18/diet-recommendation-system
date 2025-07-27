@@ -418,8 +418,7 @@ const DietPlan: React.FC = () => {
             <Button
               variant="ghost"
               onClick={handleBackToForm}
-              className="flex items-center space-x-2"
-            >
+              className="flex items-center space-x-2">
               <ArrowLeft className="w-4 h-4" />
               <span>Back</span>
             </Button>
@@ -429,16 +428,14 @@ const DietPlan: React.FC = () => {
             <Button
               variant="outline"
               onClick={handleDownloadPDF}
-              className="flex items-center space-x-2"
-            >
+              className="flex items-center space-x-2">
               <Download className="w-4 h-4" />
               <span>Download PDF</span>
             </Button>
             <Button
               variant="outline"
               onClick={handleShare}
-              className="flex items-center space-x-2"
-            >
+              className="flex items-center space-x-2">
               <Share2 className="w-4 h-4" />
               <span>Share</span>
             </Button>
@@ -554,7 +551,7 @@ const DietPlan: React.FC = () => {
                   {userInput.healthIssues || "None"}
                 </span>
               </div>
-                            <div className="flex justify-between">
+              <div className="flex justify-between">
                 <span className="text-gray-600">Meal Frequency:</span>
                 <span className="font-medium">
                   {recommendations.meals.length || "None"}

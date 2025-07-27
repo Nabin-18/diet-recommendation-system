@@ -8,16 +8,24 @@ interface AuthenticatedRequest extends Request {
   };
 }
 
-// ---------------------------
 // Save new prediction & meals
-// ---------------------------
+
 export const savePrediction = async (
   req: AuthenticatedRequest,
   res: Response
 ): Promise<void> => {
   try {
     const userId = req.user?.id;
-    const { inputId, meals, bmr, tdee, bmi, calorie_target, expectedWeight, weightChange } = req.body;
+    const {
+      inputId,
+      meals,
+      bmr,
+      tdee,
+      bmi,
+      calorie_target,
+      expectedWeight,
+      weightChange,
+    } = req.body;
 
     if (!userId || !inputId) {
       res.status(400).json({ message: "Missing userId or inputId" });
@@ -26,8 +34,8 @@ export const savePrediction = async (
 
     // 1. Mark previous predictions for this user and input as not current
     await prisma.predictedDetails.updateMany({
-      where: { userId, inputId: inputId },
-      data: { isCurrent: false }
+      where: { userId },
+      data: { isCurrent: false },
     });
 
     // 2. Mark all other UserInputDetails as inactive
@@ -57,26 +65,28 @@ export const savePrediction = async (
         expectedWeight: expectedWeight,
         weightChange: parseFloat(weightChange.toFixed(2)),
         isCurrent: true,
-        meals: meals?.length > 0
-          ? {
-            create: meals.map((meal: any) => ({
-              name: meal.name || "Unknown Meal",
-              target_calories: meal.target_calories || meal["Calories (kcal)"] || 0,
-              optimized_calories: meal.optimized_calories || meal["Calories (kcal)"] || 0,
-              calories: meal["Calories (kcal)"] || 0,
-              protein: meal["Protein (g)"] || 0,
-              carbs: meal["Carbs (g)"] || 0,
-              fat: meal["Fat (g)"] || 0,
-              sodium: meal["Sodium (mg)"] || 0,
-              fiber: meal["Fiber (g)"] || 0,
-              sugar: meal["Sugar (g)"] || 0,
-              instructions: meal.instructions || "No instructions available",
-              image: meal.image || "No image available",
-              calorie_match_pct: meal.calorie_match_pct || 100,
-              optimized_ingredients: meal.optimized_ingredients || [],
-            })),
-          }
-          : undefined,
+        meals:
+          meals?.length > 0
+            ? {
+                create: meals.map((meal: any) => ({
+                  name: meal.name ?? "Unknown Meal",
+                  target_calories: meal.target_calories ?? 0,
+                  optimized_calories: meal.optimized_calories ?? 0,
+                  calories: meal.calories ?? 0,
+                  protein: meal.protein ?? 0,
+                  carbs: meal.carbs ?? 0,
+                  fat: meal.fat ?? 0,
+                  sodium: meal.sodium ?? 0,
+                  fiber: meal.fiber ?? 0,
+                  sugar: meal.sugar ?? 0,
+                  instructions:
+                    meal.instructions ?? "No instructions available",
+                  image: meal.image ?? "No image available",
+                  calorie_match_pct: meal.calorie_match_pct ?? 100,
+                  optimized_ingredients: meal.optimized_ingredients ?? [],
+                })),
+              }
+            : undefined,
       },
       include: { meals: true },
     });
@@ -93,9 +103,9 @@ export const savePrediction = async (
   }
 };
 
-// ----------------------------------
-// Fetch recent N predictions (default 3)
-// ----------------------------------
+
+// Fetch recent N predictions
+
 export const getPredictedDetails = async (
   req: AuthenticatedRequest,
   res: Response
@@ -125,9 +135,8 @@ export const getPredictedDetails = async (
   }
 };
 
-// -------------------------------------------
+
 // Fetch latest active diet plan (active input + current prediction)
-// -------------------------------------------
 export const getLatestDietPlan = async (
   req: AuthenticatedRequest,
   res: Response
@@ -163,3 +172,78 @@ export const getLatestDietPlan = async (
     res.status(500).json({ message: "Failed to fetch latest diet plan" });
   }
 };
+
+export async function createPrediction({
+  userId,
+  inputId,
+  meals,
+  bmr,
+  tdee,
+  bmi,
+  calorie_target,
+  expectedWeight,
+  weightChange,
+}: {
+  userId: number;
+  inputId: number;
+  meals: any[];
+  bmr?: number;
+  tdee?: number;
+  bmi?: number;
+  calorie_target?: number;
+  expectedWeight?: number;
+  weightChange: number;
+}) {
+  await prisma.predictedDetails.updateMany({
+    where: { userId },
+    data: { isCurrent: false },
+  });
+
+  await prisma.userInputDetails.updateMany({
+    where: { userId, NOT: { id: inputId } },
+    data: { isActive: false },
+  });
+
+  await prisma.userInputDetails.update({
+    where: { id: inputId },
+    data: { isActive: true },
+  });
+
+  const prediction = await prisma.predictedDetails.create({
+    data: {
+      userId,
+      inputId,
+      bmr,
+      tdee,
+      bmi,
+      calorie_target,
+      expectedWeight,
+      weightChange: parseFloat(weightChange?.toFixed(2)),
+      isCurrent: true,
+      meals:
+        meals?.length > 0
+          ? {
+              create: meals.map((meal: any) => ({
+                name: meal.name ?? "Unknown Meal",
+                target_calories: meal.target_calories ?? 0,
+                optimized_calories: meal.optimized_calories ?? 0,
+                calories: meal.calories ?? 0,
+                protein: meal.protein ?? 0,
+                carbs: meal.carbs ?? 0,
+                fat: meal.fat ?? 0,
+                sodium: meal.sodium ?? 0,
+                fiber: meal.fiber ?? 0,
+                sugar: meal.sugar ?? 0,
+                instructions: meal.instructions ?? "No instructions available",
+                image: meal.image ?? "No image available",
+                calorie_match_pct: meal.calorie_match_pct ?? 100,
+                optimized_ingredients: meal.optimized_ingredients ?? [],
+              })),
+            }
+          : undefined,
+    },
+    include: { meals: true },
+  });
+
+  return prediction;
+}

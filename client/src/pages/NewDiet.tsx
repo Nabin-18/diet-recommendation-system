@@ -29,36 +29,71 @@ function normalizeMeal(meal: any): any {
     mealType: meal.mealType || "",
     optimized_ingredients:
       meal["Optimized Ingredients"] ?? meal.optimized_ingredients ?? [],
-    // Parse instructions string to array if needed
-    instructions: (() => {
-      if (Array.isArray(meal.Instructions)) return meal.Instructions;
-      if (typeof meal.Instructions === "string") {
-        // Try to extract array from string like "1. ['step1', 'step2']"
-        const match = meal.Instructions.match(/\[(.*)\]/s);
-        if (match) {
-          try {
-            // Add quotes to keys if missing, then parse
-            return JSON.parse(match[0].replace(/'/g, '"'));
-          } catch {
-            // fallback: split by "', '"
-            return meal.Instructions.replace(/^1\.\s*\[/, "")
-              .replace(/\]$/, "")
-              .split("', '")
-              .map((s: string) => s.replace(/^'/, "").replace(/'$/, "").trim());
-          }
-        }
-        // fallback: treat as single step
-        return [meal.Instructions];
-      }
-      return [];
-    })(),
+    // Fix: check both keys for instructions
+    instructions: meal.instructions ?? meal.Instructions ?? "",
   };
+}
+
+function getCleanInstructions(
+  instructions:
+    | string
+    | string[]
+    | Record<string, string | string[]>
+    | null
+    | undefined
+) {
+  if (!instructions) return [];
+  if (
+    Array.isArray(instructions) &&
+    instructions.every((item) => typeof item === "string")
+  ) {
+    return instructions.map((step) => step.trim()).filter(Boolean);
+  }
+  if (typeof instructions === "object" && !Array.isArray(instructions)) {
+    const allSteps: string[] = [];
+    Object.keys(instructions)
+      .sort((a, b) => parseInt(a) - parseInt(b))
+      .forEach((key) => {
+        const steps = instructions[key];
+        if (Array.isArray(steps)) {
+          allSteps.push(...steps);
+        } else if (typeof steps === "string") {
+          allSteps.push(steps);
+        }
+      });
+    return allSteps.map((step) => step.trim()).filter(Boolean);
+  }
+  if (typeof instructions === "string") {
+    let str = instructions.trim();
+    try {
+      str = str.replace(/[\r\n\t]/g, " ");
+      const match = str.match(/^\d+\.\s*(\[.*\])$/);
+      if (match) {
+        const arrayStr = match[1].replace(/'/g, '"');
+        const arr = JSON.parse(arrayStr);
+        if (Array.isArray(arr)) {
+          return arr.map((step) => step.trim()).filter(Boolean);
+        }
+      }
+      const parsed = JSON.parse(str.replace(/'/g, '"'));
+      if (typeof parsed === "object") {
+        return getCleanInstructions(parsed);
+      }
+    } catch {
+      // Fallback
+    }
+    return str
+      .split(/[.!?]\s+/)
+      .map((step) => step.replace(/^\d+\.\s*/, "").trim())
+      .filter(Boolean);
+  }
+  return [];
 }
 
 const NewDiet: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { dietPlanData} = location.state || {};
+  const { dietPlanData } = location.state || {};
   const userInput = dietPlanData?.userInput || {};
 
   if (!dietPlanData) {
@@ -67,8 +102,7 @@ const NewDiet: React.FC = () => {
         <p>No new diet plan data found.</p>
         <button
           className="mt-4 px-4 py-2 bg-blue-600 text-white rounded"
-          onClick={() => navigate("/main-page")}
-        >
+          onClick={() => navigate("/main-page")}>
           Back to Main Page
         </button>
       </div>
@@ -199,8 +233,7 @@ ${
             <Button
               variant="ghost"
               onClick={handleBackToMain}
-              className="flex items-center space-x-2"
-            >
+              className="flex items-center space-x-2">
               <ArrowLeft className="w-4 h-4" />
               <span>Back</span>
             </Button>
@@ -212,16 +245,14 @@ ${
             <Button
               variant="outline"
               onClick={handleDownload}
-              className="flex items-center space-x-2 flex-1 sm:flex-none"
-            >
+              className="flex items-center space-x-2 flex-1 sm:flex-none">
               <Download className="w-4 h-4" />
               <span className="sr-only sm:not-sr-only">Download</span>
             </Button>
             <Button
               variant="outline"
               onClick={handleShare}
-              className="flex items-center space-x-2 flex-1 sm:flex-none"
-            >
+              className="flex items-center space-x-2 flex-1 sm:flex-none">
               <Share2 className="w-4 h-4" />
               <span className="sr-only sm:not-sr-only">Share</span>
             </Button>
@@ -260,12 +291,12 @@ ${
               <InfoRow label="Gender:" value={userInput.gender} />
               <InfoRow label="Goal:" value={userInput.goal} />
               <InfoRow label="Activity:" value={userInput.activityType} />
-              <InfoRow label="Diet Preference:" value={userInput.preferences} />
-              <InfoRow
+              {/* <InfoRow label="Diet Preference:" value={userInput.preferences} /> */}
+              {/* <InfoRow
                 label="Health Condition:"
                 value={userInput.healthIssues || "None"}
               />
-              <InfoRow label="Meal Plan:" value={userInput.mealPlan} />
+              <InfoRow label="Meal Plan:" value={userInput.mealPlan} /> */}
             </CardContent>
           </Card>
 
@@ -326,11 +357,11 @@ ${
                   <span className="capitalize">{userInput.preferences}</span>
                 }
               />
-              <InfoRow label="Meals/Day:" value={safeMeals.length} />
               <InfoRow
                 label="Health Issues:"
                 value={userInput.healthIssues || "None"}
               />
+              <InfoRow label="Meals Frequency" value={safeMeals.length} />
             </CardContent>
           </Card>
         </div>
@@ -351,19 +382,20 @@ ${
                 key={`${meal.name}-${index}`}
                 meal={meal}
                 index={index}
-                instructions={meal.instructions}
+                instructions={getCleanInstructions(meal.instructions)}
               />
             ))
           )}
         </div>
+
+        {/* Footer */}
 
         {/* Action Button */}
         <div className="flex justify-center mt-12">
           <Button
             onClick={handleBackToMain}
             size="lg"
-            className="px-8 py-6 text-lg"
-          >
+            className="px-8 py-6 text-lg">
             Back to Main Page
           </Button>
         </div>
