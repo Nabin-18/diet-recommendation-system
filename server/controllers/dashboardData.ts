@@ -31,7 +31,7 @@ export const getDashboardData = async (
       },
     });
 
-    // Get latest input details
+    // get latest input details
     const latestInput = await prisma.userInputDetails.findFirst({
       where: { userId, isActive: true },
       orderBy: { createdAt: "desc" },

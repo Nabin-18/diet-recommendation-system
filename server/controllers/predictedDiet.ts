@@ -8,9 +8,8 @@ interface AuthenticatedRequest extends Request {
   };
 }
 
-// ---------------------------
 // Save new prediction & meals
-// ---------------------------
+
 export const savePrediction = async (
   req: AuthenticatedRequest,
   res: Response
@@ -35,7 +34,7 @@ export const savePrediction = async (
 
     // 1. Mark previous predictions for this user and input as not current
     await prisma.predictedDetails.updateMany({
-      where: { userId, inputId: inputId },
+      where: { userId },
       data: { isCurrent: false },
     });
 
@@ -104,9 +103,9 @@ export const savePrediction = async (
   }
 };
 
-// ----------------------------------
-// Fetch recent N predictions (default 3)
-// ----------------------------------
+
+// Fetch recent N predictions
+
 export const getPredictedDetails = async (
   req: AuthenticatedRequest,
   res: Response
@@ -136,9 +135,8 @@ export const getPredictedDetails = async (
   }
 };
 
-// -------------------------------------------
+
 // Fetch latest active diet plan (active input + current prediction)
-// -------------------------------------------
 export const getLatestDietPlan = async (
   req: AuthenticatedRequest,
   res: Response
@@ -197,7 +195,7 @@ export async function createPrediction({
   weightChange: number;
 }) {
   await prisma.predictedDetails.updateMany({
-    where: { userId, inputId },
+    where: { userId },
     data: { isCurrent: false },
   });
 

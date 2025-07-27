@@ -127,7 +127,7 @@ export const getAllInputDetailsOfUser = async (
     }
 
     // --- CREATE PREDICTION ---
-    await prisma.predictedDetails.create({
+    const newPrediction = await prisma.predictedDetails.create({
       data: {
         userId,
         inputId: inputDetails.id,
@@ -141,25 +141,41 @@ export const getAllInputDetailsOfUser = async (
         meals:
           meals.length > 0
             ? {
-              create: meals.map((item: any) => ({
-                name: item.Name || item.name || "Unknown Meal",
-                target_calories: item.target_calories || item["Calories (kcal)"] || 0,
-                optimized_calories: item.optimized_calories || item["Calories (kcal)"] || 0,
-                calories: item["Calories (kcal)"] || item.calories || 0,
-                protein: item["Protein (g)"] || item.protein || 0,
-                carbs: item["Carbs (g)"] || item.carbs || 0,
-                fat: item["Fat (g)"] || item.fat || 0,
-                sodium: item["Sodium (mg)"] || item.sodium || 0,
-                fiber: item["Fiber (g)"] || item.fiber || 0,
-                sugar: item["Sugar (g)"] || item.sugar || 0,
-                instructions: item.Instructions || item.instructions || "No instructions available",
-                image: item.Image || item.image || "No image available",
-                calorie_match_pct: item.calorie_match_pct || 100,
-                optimized_ingredients: item["Optimized Ingredients"] || item.optimized_ingredients || [],
-              })),
-            }
+                create: meals.map((item: any) => ({
+                  name: item.Name || item.name || "Unknown Meal",
+                  target_calories:
+                    item.target_calories || item["Calories (kcal)"] || 0,
+                  optimized_calories:
+                    item.optimized_calories || item["Calories (kcal)"] || 0,
+                  calories: item["Calories (kcal)"] || item.calories || 0,
+                  protein: item["Protein (g)"] || item.protein || 0,
+                  carbs: item["Carbs (g)"] || item.carbs || 0,
+                  fat: item["Fat (g)"] || item.fat || 0,
+                  sodium: item["Sodium (mg)"] || item.sodium || 0,
+                  fiber: item["Fiber (g)"] || item.fiber || 0,
+                  sugar: item["Sugar (g)"] || item.sugar || 0,
+                  instructions:
+                    item.Instructions ||
+                    item.instructions ||
+                    "No instructions available",
+                  image: item.Image || item.image || "No image available",
+                  calorie_match_pct: item.calorie_match_pct || 100,
+                  optimized_ingredients:
+                    item["Optimized Ingredients"] ||
+                    item.optimized_ingredients ||
+                    [],
+                })),
+              }
             : undefined,
       },
+    });
+
+    await prisma.predictedDetails.updateMany({
+      where: {
+        userId,
+        NOT: { id: newPrediction.id },
+      },
+      data: { isCurrent: false },
     });
 
     // Send notification to user
@@ -167,8 +183,9 @@ export const getAllInputDetailsOfUser = async (
       userId,
       type: "DIET_PLAN_GENERATED",
       title: "New Diet Plan Ready! 🍽️",
-      message: `Your personalized ${goal.toLowerCase()} diet plan has been generated with ${diet_plan.length
-        } meals! 🎯 Target: ${calorie_target} kcal/day.\n📉 Expected weight after 15 days: ${expected_weight} kg.`,
+      message: `Your personalized ${goal.toLowerCase()} diet plan has been generated with ${
+        diet_plan.length
+      } meals! 🎯 Target: ${calorie_target} kcal/day.\n📉 Expected weight after 15 days: ${expected_weight} kg.`,
     });
 
     res.status(200).json({
@@ -183,7 +200,7 @@ export const getAllInputDetailsOfUser = async (
       weight_change_kg: parseFloat(weight_change_kg.toFixed(2)),
     });
   } catch (error) {
-    console.error("❌ Error in getAllInputDetailsOfUser:", error);
+    console.error(" Error in getAllInputDetailsOfUser:", error);
     res.status(500).json({ message: "Server error", error: error });
   }
 };

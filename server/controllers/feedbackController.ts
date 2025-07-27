@@ -57,7 +57,7 @@ export const submitFeedback = async (
       },
     });
 
-    // Fetch updated input details
+    // fetch updated input details
     const inputDetails = await prisma.userInputDetails.findUnique({
       where: { id: Number(inputDetailId) },
     });
@@ -135,7 +135,7 @@ export const submitFeedback = async (
         ? prediction.diet_plan.meals
         : [];
 
-      // --- Calculate expected weight and weight change (same logic as initial) ---
+      // Calculate expected weight and weight change (same logic as initial) ---
       const days = 15;
       const calorie_diff_per_day =
         predictionData.calorie_target - predictionData.tdee;
@@ -145,7 +145,7 @@ export const submitFeedback = async (
         (weightForFastAPI + weight_change_kg).toFixed(2)
       );
 
-      // Map meals to match DB schema
+      // map meals to match DB schema
       const mappedMeals = meals.map((meal: any) => ({
         name: meal.Name ?? meal.name ?? "Unknown Meal",
         target_calories:
@@ -185,8 +185,8 @@ export const submitFeedback = async (
         tdee: predictionData.tdee,
         bmi: predictionData.bmi,
         calorie_target: predictionData.calorie_target,
-        expectedWeight: expected_weight, // <-- calculated value
-        weightChange: parseFloat(weight_change_kg.toFixed(2)), // <-- calculated value
+        expectedWeight: expected_weight, // calculated value
+        weightChange: parseFloat(weight_change_kg.toFixed(2)), // calculated value
       });
 
       responseData = {
