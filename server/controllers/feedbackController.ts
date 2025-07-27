@@ -2,6 +2,7 @@ import axios from "axios";
 import prisma from "../config/db";
 import type { Request, Response } from "express";
 import { createPrediction } from "./predictedDiet"; // Add this import
+import { createNotification } from "./notificationController";
 
 type AuthenticatedRequest = Request & {
   user?: { id: number };
@@ -185,8 +186,20 @@ export const submitFeedback = async (
         tdee: predictionData.tdee,
         bmi: predictionData.bmi,
         calorie_target: predictionData.calorie_target,
-        expectedWeight: expected_weight, // calculated value
-        weightChange: parseFloat(weight_change_kg.toFixed(2)), // calculated value
+        expectedWeight: expected_weight,
+        weightChange: parseFloat(weight_change_kg.toFixed(2)),
+      });
+
+      // --- ADD NOTIFICATION HERE ---
+      await createNotification({
+        userId,
+        type: "DIET_PLAN_GENERATED",
+        title: "New Diet Plan Ready! 🍽️",
+        message: `Your personalized ${inputDetails.goal.toLowerCase()} diet plan has been generated with ${
+          mappedMeals.length
+        } meals! 🎯 Target: ${
+          predictionData.calorie_target
+        } kcal/day.\n📉 Expected weight after 15 days: ${expected_weight} kg.`,
       });
 
       responseData = {
