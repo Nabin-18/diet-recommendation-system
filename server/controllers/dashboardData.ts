@@ -33,15 +33,17 @@ export const getDashboardData = async (
 
     // Get latest input details
     const latestInput = await prisma.userInputDetails.findFirst({
-      where: { userId },
+      where: { userId, isActive: true },
       orderBy: { createdAt: "desc" },
     });
 
     // Get latest prediction
-    const latestPrediction = await prisma.predictedDetails.findFirst({
-      where: { userId },
-      orderBy: { createdAt: "desc" },
-    });
+    const latestPrediction = latestInput
+      ? await prisma.predictedDetails.findFirst({
+          where: { userId, inputId: latestInput.id, isCurrent: true },
+          orderBy: { predictionDate: "desc" },
+        })
+      : null;
 
     res.status(200).json({
       user,
