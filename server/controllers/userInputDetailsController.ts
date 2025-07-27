@@ -96,6 +96,8 @@ export const getAllInputDetailsOfUser = async (
       fastApiPayload
     );
 
+    // console.log(pythonResponse.data);
+
     const { bmr, tdee, bmi, calorie_target, diet_plan } = pythonResponse.data;
 
     // Calculate expected weight
