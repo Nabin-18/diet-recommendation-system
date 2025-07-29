@@ -16,6 +16,10 @@ const transporter = nodemailer.createTransport({
 export const sendFeedbackReminders = async () => {
   const twoMinutesAgo = new Date(Date.now() - 2 * 60 * 1000);
 
+  //for 15 days reminder coomment above and uncomment below (15*24*60 = 21600 minutes)
+  // const twoMinutesAgo = new Date(Date.now() - 21600 * 60 * 1000);
+
+
   const inputsToRemind = await prisma.userInputDetails.findMany({
     where: {
       OR: [
