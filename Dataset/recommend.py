@@ -4,9 +4,13 @@ import numpy as np
 from sklearn.metrics.pairwise import cosine_similarity
 from sklearn.preprocessing import MinMaxScaler
 from scipy.optimize import minimize
+import os
 
 # Load nutrient data
-nutrient = pd.read_csv('nutrient_cleaned.csv')
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+NUTRIENT_PATH = os.path.join(BASE_DIR, "nutrient_cleaned.csv")
+nutrient = pd.read_csv(NUTRIENT_PATH)
+
 calorie_lookup = dict(zip(nutrient['food'].str.lower(), nutrient['calories']))
 
 # -------------------------------------------
